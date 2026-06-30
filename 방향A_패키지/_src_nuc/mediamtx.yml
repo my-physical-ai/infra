@@ -1,0 +1,18 @@
+# mediamtx.yml - NUC MediaMTX 설정 (RTSP 수신 → WebRTC 송출)
+# 감지기가 rtsp://127.0.0.1:8554/safety 로 push하면, 브라우저는 WebRTC(8889)로 시청
+
+# RTSP 서버 (감지기가 영상을 밀어넣는 입구)
+rtsp: yes
+rtspAddress: :8554
+
+# WebRTC 서버 (브라우저가 영상을 받아가는 출구)
+webrtc: yes
+webrtcAddress: :8889
+# 브라우저가 NUC에 직접 붙도록 로컬 네트워크 IP 허용
+webrtcLocalUDPAddress: :8189
+webrtcAdditionalHosts: [192.168.0.65]   # ← NUC IP
+
+# 스트림 경로 설정
+paths:
+  safety:                # 대시보드 STREAM_NAME / 감지기 RTSP_URL과 일치해야 함
+    source: publisher    # 외부(감지기)가 publish하는 스트림을 받음
