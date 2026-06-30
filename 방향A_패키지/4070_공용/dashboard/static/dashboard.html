@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<!-- dashboard.html - 안전지역 침범 관제 대시보드 (대형 화면 토론용) -->
+<!-- [2026-06-30 개편] 깜빡임 제거 + 검색결과 표시 + 날짜/시간검색 + 녹화영상 목록 -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안전지역 침범 관제 시스템</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Malgun Gothic',sans-serif; background:#0a0e1a; color:#e8edf5; }
+  header { display:flex; justify-content:space-between; align-items:center;
+    padding:18px 32px; background:linear-gradient(90deg,#111a2e,#0d1525); border-bottom:2px solid #1e2d4a; }
+  header h1 { font-size:24px; font-weight:700; }
+  header h1 span { color:#ff4d5e; }
+  .clock { font-size:18px; font-variant-numeric:tabular-nums; color:#7fa8d8; }
+  .live { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#5fd99a; }
+  .live::before { content:''; width:9px; height:9px; border-radius:50%; background:#5fd99a; animation:blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity:0.2; } }
+
+  .video-btn { padding:9px 18px; background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff;
+    border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+  .video-btn:hover { background:#1d4ed8; }
+  .team-select { padding:9px 14px; background:#0c1322; color:#e8edf5; border:1px solid #2a3b5c;
+    border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+
+  .grid { display:grid; grid-template-columns:1fr 1.2fr 1.3fr; gap:18px; padding:22px 32px; }
+  .panel { background:#101728; border:1px solid #1d2940; border-radius:14px; padding:20px; }
+  .panel h2 { font-size:16px; color:#8fb3e0; margin-bottom:16px; font-weight:600; }
+  .panel h2.sub { font-size:14px; margin-top:22px; }
+
+  .stat-row { display:flex; gap:14px; margin-bottom:14px; }
+  .stat-card { flex:1; background:#0c1322; border-radius:12px; padding:16px; text-align:center; border:1px solid #1a2740; }
+  .stat-card .num { font-size:34px; font-weight:800; line-height:1; }
+  .stat-card .lbl { font-size:12px; color:#6b87b0; margin-top:8px; }
+  .high .num { color:#ff4d5e; } .mid .num { color:#ffaa3b; } .low .num { color:#5fd99a; }
+
+  .event-list { max-height:340px; overflow-y:auto; }
+  .event-item { display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px;
+    background:#0c1322; border-radius:10px; border-left:4px solid #ff4d5e; }
+  .event-item.sev-mid { border-left-color:#ffaa3b; }
+  .event-item.sev-low { border-left-color:#5fd99a; }
+  .ev-worker { font-weight:700; font-size:15px; }
+  .ev-meta { font-size:12px; color:#6b87b0; }
+  .ev-dist { margin-left:auto; font-size:17px; font-weight:700; }
+  .badge { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; }
+  .badge.high { background:#3a1218; color:#ff8a96; }
+  .badge.mid { background:#3a2a10; color:#ffc878; }
+  .badge.low { background:#0f3320; color:#7fe0a8; }
+
+  /* 검색 영역 */
+  .search-tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .tab-btn { flex:1; padding:8px; background:#0c1322; border:1px solid #2a3b5c; color:#8fb3e0;
+    border-radius:8px; font-size:13px; cursor:pointer; }
+  .tab-btn.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+  .search-pane { display:none; }
+  .search-pane.active { display:block; }
+  .search-box { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .search-box input { padding:9px; background:#0c1322; border:1px solid #2a3b5c; color:#e8edf5;
+    border-radius:8px; font-size:14px; }
+  .search-box input[type=number] { width:70px; text-align:center; }
+  .search-box input[type=datetime-local] { flex:1; min-width:160px; }
+  .search-box label { font-size:13px; color:#8fb3e0; }
+  .search-box button { padding:9px 18px; background:#2563eb; color:#fff; border:none;
+    border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+  .search-box button:hover { background:#1d4ed8; }
+  .result-window { font-size:12px; color:#6b87b0; margin-bottom:12px; padding:9px 12px;
+    background:#0c1322; border-radius:8px; line-height:1.6; }
+  .result-window.error { background:#2a1218; color:#ff8a96; }
+  .worker-card { display:flex; align-items:center; gap:14px; padding:13px; margin-bottom:10px;
+    background:#0c1322; border-radius:10px; border:1px solid #1a2740; }
+  .worker-card .wid { font-size:19px; font-weight:800; color:#ffaa3b; }
+  .worker-card .winfo { font-size:12px; color:#8fb3e0; }
+  .worker-card .wcount { margin-left:auto; text-align:right; }
+  .worker-card .wcount b { font-size:21px; color:#ff4d5e; }
+  .empty { text-align:center; color:#4a5d80; padding:24px; font-size:14px; }
+
+  /* 녹화 영상 목록 */
+  .rec-list { max-height:200px; overflow-y:auto; }
+  .rec-item { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:7px;
+    background:#0c1322; border-radius:9px; border:1px solid #1a2740; cursor:pointer; }
+  .rec-item:hover { border-color:#2563eb; }
+  .rec-item .rname { font-size:13px; color:#cde0f5; }
+  .rec-item .rmeta { font-size:11px; color:#6b87b0; margin-left:auto; }
+
+  /* 영상 모달 */
+  .video-modal { display:none; position:fixed; inset:0; background:rgba(5,8,16,0.9);
+    z-index:1000; justify-content:center; align-items:center; }
+  .video-modal.open { display:flex; }
+  .video-box { width:80vw; max-width:1000px; background:#101728; border:1px solid #2a3b5c;
+    border-radius:16px; overflow:hidden; }
+  .video-head { display:flex; justify-content:space-between; align-items:center;
+    padding:15px 20px; background:#0d1525; border-bottom:1px solid #1e2d4a; font-weight:600; }
+  .video-close { padding:7px 14px; background:#2a1820; color:#ff8a96; border:1px solid #4a2530;
+    border-radius:8px; cursor:pointer; font-size:13px; }
+  #video-frame, #rec-player { width:100%; height:60vh; border:none; background:#000; display:block; }
+  .video-foot { padding:11px 20px; font-size:12px; color:#6b87b0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ 안전지역 침범 <span>관제 시스템</span></h1>
+  <div style="display:flex; gap:20px; align-items:center;">
+    <select class="team-select" id="team-select" onchange="onTeamChange()">
+      <option value="all">🏢 전체 통합 보기</option>
+    </select>
+    <button class="video-btn" onclick="openLiveVideo()">📹 실시간 영상 보기</button>
+    <span class="live">LIVE</span>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- 영상 모달 (실시간/녹화 공용) -->
+<div class="video-modal" id="video-modal">
+  <div class="video-box">
+    <div class="video-head">
+      <span id="video-title">📹 실시간 영상</span>
+      <button class="video-close" onclick="closeVideo()">✕ 닫기</button>
+    </div>
+    <iframe id="video-frame" allow="autoplay" allowfullscreen></iframe>
+    <video id="rec-player" controls style="display:none;"></video>
+    <div class="video-foot" id="video-status"></div>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- 좌: 통계 -->
+  <div class="panel">
+    <h2>📊 침범 현황 통계</h2>
+    <div class="stat-row">
+      <div class="stat-card high"><div class="num" id="s-high">0</div><div class="lbl">고위험 (30cm↓)</div></div>
+      <div class="stat-card mid"><div class="num" id="s-mid">0</div><div class="lbl">중위험</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card low"><div class="num" id="s-total">0</div><div class="lbl">총 침범 건수</div></div>
+    </div>
+    <h2 class="sub">🎬 침범 녹화 영상</h2>
+    <div class="rec-list" id="rec-list"><div class="empty">녹화 없음</div></div>
+  </div>
+
+  <!-- 중: 실시간 침범 -->
+  <div class="panel">
+    <h2>🚨 실시간 침범 이벤트</h2>
+    <div class="event-list" id="event-list"><div class="empty">데이터 수신 대기 중...</div></div>
+  </div>
+
+  <!-- 우: 사후 검색 -->
+  <div class="panel">
+    <h2>🔍 사후 추적 검색 (OpenSearch)</h2>
+    <div class="search-tabs">
+      <button class="tab-btn active" id="tab-min" onclick="switchTab('min')">⏱️ N분 전</button>
+      <button class="tab-btn" id="tab-range" onclick="switchTab('range')">📅 날짜·시간</button>
+    </div>
+
+    <!-- N분 전 검색 -->
+    <div class="search-pane active" id="pane-min">
+      <div class="search-box">
+        <label>몇 분 전?</label>
+        <input type="number" id="minutes" value="20" min="1">
+        <label>분 (±5분)</label>
+        <button onclick="lookback()">검색</button>
+      </div>
+    </div>
+
+    <!-- 날짜·시간 검색 -->
+    <div class="search-pane" id="pane-range">
+      <div class="search-box">
+        <label>시작</label>
+        <input type="datetime-local" id="from-dt">
+      </div>
+      <div class="search-box">
+        <label>종료</label>
+        <input type="datetime-local" id="to-dt">
+        <button onclick="searchRange()">검색</button>
+      </div>
+    </div>
+
+    <div class="result-window" id="result-window">검색 버튼을 눌러 과거 침범자를 추적하세요</div>
+    <div id="worker-results"></div>
+  </div>
+</div>
+
+<script>
+// ===== 설정 (여기만 바꾸면 됨) =====
+const NUC_IP = "192.168.0.65";        // ← NUC IP (RealSense + MediaMTX)
+// 현재 선택된 팀 (all = 전체 통합). 모든 검색에 이 값을 전달.
+let currentTeam = "all";
+
+// 팀 목록을 불러와 드롭다운 채우기
+async function loadTeams(){
+  try {
+    const res = await fetch('/api/teams');
+    const teams = await res.json();
+    const sel = document.getElementById('team-select');
+    // 기존 옵션 중 '전체'만 남기고 팀 추가
+    sel.innerHTML = '<option value="all">🏢 전체 통합 보기</option>';
+    teams.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.team_id;
+      o.textContent = `👷 ${t.team_id} (${t.count}건)`;
+      sel.appendChild(o);
+    });
+    sel.value = currentTeam;
+  } catch(err){ console.error(err); }
+}
+
+// 팀 바꾸면 모든 화면 갱신
+function onTeamChange(){
+  currentTeam = document.getElementById('team-select').value;
+  lastEventKey = ''; lastStatKey = '';   // 강제 갱신
+  refresh(); refreshStats();
+}
+const WEBRTC_PORT = 8889;
+const STREAM_NAME = "safety";
+const RECORDING_PORT = 8600;          // NUC 영상 서버 포트
+const LIVE_VIDEO_URL = `http://${NUC_IP}:${WEBRTC_PORT}/${STREAM_NAME}`;
+
+// ---- 시계 ----
+function tick(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString('ko-KR'); }
+setInterval(tick, 1000); tick();
+
+// ---- 영상 모달 ----
+function openLiveVideo(){
+  document.getElementById('video-title').textContent = '📹 실시간 영상 (NUC WebRTC)';
+  document.getElementById('rec-player').style.display = 'none';
+  const f = document.getElementById('video-frame');
+  f.style.display = 'block'; f.src = LIVE_VIDEO_URL;
+  document.getElementById('video-status').textContent = `스트림: ${LIVE_VIDEO_URL}`;
+  document.getElementById('video-modal').classList.add('open');
+}
+function openRecording(name){
+  document.getElementById('video-title').textContent = '🎬 녹화 영상: ' + name;
+  document.getElementById('video-frame').style.display = 'none';
+  document.getElementById('video-frame').src = '';
+  const p = document.getElementById('rec-player');
+  p.style.display = 'block'; p.src = `http://${NUC_IP}:${RECORDING_PORT}/recordings/` + encodeURIComponent(name);
+  document.getElementById('video-status').textContent = '침범 시점에 녹화된 영상입니다';
+  document.getElementById('video-modal').classList.add('open');
+}
+function closeVideo(){
+  document.getElementById('video-frame').src = '';
+  const p = document.getElementById('rec-player'); p.pause(); p.src = '';
+  document.getElementById('video-modal').classList.remove('open');
+}
+document.getElementById('video-modal').addEventListener('click', e=>{ if(e.target.id==='video-modal') closeVideo(); });
+
+// ---- 실시간 침범 (깜빡임 방지: 변화 있을 때만 다시 그림) ----
+let lastEventKey = '';
+async function refresh(){
+  try {
+    const res = await fetch('/api/recent?team=' + currentTeam);
+    const events = await res.json();
+    if(events.error){ return; }
+    // 데이터가 이전과 같으면 다시 그리지 않음 → 깜빡임 제거
+    const key = JSON.stringify(events.map(e=>e.timestamp+e.worker_id));
+    if(key === lastEventKey) return;
+    lastEventKey = key;
+    const list = document.getElementById('event-list');
+    if(!events.length){ list.innerHTML='<div class="empty">침범 이벤트 없음</div>'; return; }
+    list.innerHTML = events.map(e => `
+      <div class="event-item sev-${e.severity}">
+        <div>
+          <div class="ev-worker">${e.worker_id}</div>
+          <div class="ev-meta">${new Date(e.timestamp).toLocaleTimeString('ko-KR')} · ${e.zone_id}</div>
+        </div>
+        <span class="badge ${e.severity}">${e.severity.toUpperCase()}</span>
+        <div class="ev-dist">${e.distance_cm}cm</div>
+      </div>`).join('');
+  } catch(err){ console.error(err); }
+}
+
+// ---- 통계 ----
+let lastStatKey = '';
+async function refreshStats(){
+  try {
+    const res = await fetch('/api/stats?team=' + currentTeam);
+    const a = await res.json();
+    if(a.error) return;
+    let high=0, mid=0, total=0;
+    (a.by_severity?.buckets||[]).forEach(b=>{
+      if(b.key==='high') high=b.doc_count;
+      if(b.key==='mid') mid=b.doc_count;
+      total+=b.doc_count;
+    });
+    const key = `${high}-${mid}-${total}`;
+    if(key === lastStatKey) return;   // 변화 없으면 갱신 안 함
+    lastStatKey = key;
+    document.getElementById('s-high').textContent=high;
+    document.getElementById('s-mid').textContent=mid;
+    document.getElementById('s-total').textContent=total;
+  } catch(err){ console.error(err); }
+}
+
+// ---- 녹화 영상 목록 ----
+let lastRecKey = '';
+async function refreshRecordings(){
+  try {
+    const res = await fetch('/api/recordings');
+    const files = await res.json();
+    const key = JSON.stringify(files.map(f=>f.name));
+    if(key === lastRecKey) return;
+    lastRecKey = key;
+    const box = document.getElementById('rec-list');
+    if(!files.length){ box.innerHTML='<div class="empty">녹화 없음</div>'; return; }
+    box.innerHTML = files.map(f=>`
+      <div class="rec-item" onclick="openRecording('${f.name}')">
+        <span>🎬</span>
+        <span class="rname">${f.name}</span>
+        <span class="rmeta">${new Date(f.mtime).toLocaleString('ko-KR')} · ${f.size_kb}KB</span>
+      </div>`).join('');
+  } catch(err){ console.error(err); }
+}
+
+// ---- 검색 탭 전환 ----
+function switchTab(which){
+  document.getElementById('tab-min').classList.toggle('active', which==='min');
+  document.getElementById('tab-range').classList.toggle('active', which==='range');
+  document.getElementById('pane-min').classList.toggle('active', which==='min');
+  document.getElementById('pane-range').classList.toggle('active', which==='range');
+}
+
+// ---- 검색 결과 렌더링 (공용) ----
+function renderResults(data, windowText){
+  const rw = document.getElementById('result-window');
+  const box = document.getElementById('worker-results');
+  if(data.error){
+    rw.className = 'result-window error';
+    rw.textContent = '⚠️ 검색 오류: ' + data.error;
+    box.innerHTML=''; return;
+  }
+  rw.className = 'result-window';
+  rw.innerHTML = windowText;
+  if(!data.workers || !data.workers.length){
+    box.innerHTML='<div class="empty">해당 시간대 침범자 없음</div>'; return;
+  }
+  box.innerHTML = data.workers.map(w=>`
+    <div class="worker-card">
+      <div class="wid">${w.worker_id}</div>
+      <div class="winfo">최근접 거리<br><b style="color:#ff8a96">${w.closest_cm ?? '-'}cm</b></div>
+      <div class="wcount"><b>${w.count}</b><br><span style="font-size:11px;color:#6b87b0">회 침범</span></div>
+    </div>`).join('');
+}
+
+// ---- N분 전 검색 ----
+async function lookback(){
+  const min = document.getElementById('minutes').value;
+  document.getElementById('result-window').textContent = '검색 중...';
+  try {
+    const res = await fetch(`/api/lookback?minutes=${min}&window=5&team=${currentTeam}`);
+    const data = await res.json();
+    const w = data.search_window || {};
+    const txt = w.from ? `🕐 <b>${min}분 전</b> ±5분 구간<br>
+      ${new Date(w.from).toLocaleString('ko-KR')} ~ ${new Date(w.to).toLocaleString('ko-KR')}` : '';
+    renderResults(data, txt);
+  } catch(err){
+    renderResults({error: '서버 연결 실패 (' + err.message + ')'}, '');
+  }
+}
+
+// ---- 날짜·시간 구간 검색 ----
+async function searchRange(){
+  const from = document.getElementById('from-dt').value;
+  const to = document.getElementById('to-dt').value;
+  if(!from || !to){
+    renderResults({error:'시작/종료 시간을 모두 입력하세요'}, ''); return;
+  }
+  document.getElementById('result-window').textContent = '검색 중...';
+  try {
+    const res = await fetch(`/api/search_range?from=${from}&to=${to}&team=${currentTeam}`);
+    const data = await res.json();
+    const txt = `📅 직접 지정 구간<br>
+      ${new Date(from).toLocaleString('ko-KR')} ~ ${new Date(to).toLocaleString('ko-KR')}`;
+    renderResults(data, txt);
+  } catch(err){
+    renderResults({error: '서버 연결 실패 (' + err.message + ')'}, '');
+  }
+}
+
+// 날짜 입력 기본값: 1시간 전 ~ 지금
+(function initDates(){
+  const now = new Date();
+  const ago = new Date(now.getTime() - 3600000);
+  const fmt = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+
+    String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':'+
+    String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('from-dt').value = fmt(ago);
+  document.getElementById('to-dt').value = fmt(now);
+})();
+
+// 주기적 갱신
+setInterval(refresh, 3000); refresh();
+setInterval(refreshStats, 5000); refreshStats();
+setInterval(refreshRecordings, 7000); refreshRecordings();
+loadTeams(); setInterval(loadTeams, 15000);   // 팀 목록 주기 갱신
+</script>
+</body>
+</html>

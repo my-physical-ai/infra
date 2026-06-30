@@ -1,0 +1,39 @@
+# docker-compose.yml - OpenSearch + Dashboards 단일 노드 실습용 구성 (Server NUC 10.10.1.30)
+# 보안 플러그인 비활성화(실습 편의). 운영 전환 시 보안 활성화 필요.
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    container_name: safety-opensearch
+    environment:
+      - discovery.type=single-node            # 단일 노드 모드 (실습용)
+      - bootstrap.memory_lock=true            # 메모리 스왑 방지
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"  # 힙 메모리 (NUC 사양 맞춰 조정)
+      - DISABLE_SECURITY_PLUGIN=true          # 보안 플러그인 끔 (실습 편의, 운영에선 끄지 말 것)
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile:  { soft: 65536, hard: 65536 }
+    ports:
+      - "9200:9200"   # OpenSearch REST API
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks: [safety-net]
+
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.13.0
+    container_name: safety-dashboards
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"   # OpenSearch Dashboards 웹 UI (브라우저 접속 주소)
+    depends_on: [opensearch]
+    networks: [safety-net]
+
+volumes:
+  opensearch-data:
+
+networks:
+  safety-net:
+    driver: bridge
