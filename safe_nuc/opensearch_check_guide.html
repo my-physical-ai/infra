@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>실습 가이드 OpenSearch 데이터 확인</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --color-primary:#2563EB; --color-secondary:#7C3AED;
+  --color-success:#059669; --color-success-light:#D1FAE5;
+  --color-warning:#D97706; --color-warning-light:#FEF3C7;
+  --color-danger:#DC2626; --color-danger-light:#FEE2E2;
+  --color-surface:#F8FAFC; --color-card:#FFFFFF;
+  --color-text:#1E293B; --color-muted:#64748B; --color-border:#E2E8F0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans KR',sans-serif; background:var(--color-surface); color:var(--color-text); line-height:1.7; }
+code, pre { font-family:'JetBrains Mono',monospace; }
+.wrap { max-width:900px; margin:0 auto; padding:0 20px 60px; }
+
+/* 히어로 */
+.hero { background:linear-gradient(135deg,#064E3B,#10B981); color:#fff;
+  padding:54px 40px; border-radius:0 0 28px 28px; margin-bottom:36px; }
+.hero h1 { font-size:2.6rem; font-weight:900; margin-bottom:12px; }
+.hero p { font-size:1.1rem; opacity:0.95; margin-bottom:18px; }
+.pills { display:flex; gap:10px; flex-wrap:wrap; }
+.pill { background:rgba(255,255,255,0.2); padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:500; }
+
+/* 한눈에 보기 */
+.overview { background:var(--color-card); border:1px solid var(--color-border);
+  border-radius:16px; padding:26px; margin-bottom:36px; }
+.overview h2 { font-size:1.4rem; margin-bottom:18px; color:var(--color-success); }
+.flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+.flow-node { background:#ECFDF5; border:2px solid #10B981; border-radius:12px;
+  padding:12px 16px; font-size:0.85rem; font-weight:700; text-align:center; color:#065F46; }
+.flow-arrow { color:#10B981; font-size:1.3rem; font-weight:900; }
+
+.section-title { font-size:1.85rem; font-weight:700; margin:40px 0 24px; padding-bottom:10px;
+  border-bottom:3px solid var(--color-success); }
+
+/* 명령어 카드 */
+.cmd-card { background:var(--color-card); border:1px solid var(--color-border);
+  border-radius:16px; overflow:hidden; margin-bottom:2rem; box-shadow:0 4px 6px -1px rgba(0,0,0,0.08); }
+.cmd-head { display:flex; align-items:center; gap:0.85rem; padding:1.1rem 1.5rem; color:#fff; background:var(--accent); }
+.cmd-badge { flex-shrink:0; width:2.1rem; height:2.1rem; border-radius:50%;
+  background:rgba(255,255,255,0.25); border:2px solid rgba(255,255,255,0.6);
+  display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.05rem; }
+.cmd-emoji { font-size:1.7rem; }
+.cmd-name { font-weight:700; font-size:1.15rem; }
+.cmd-name small { display:block; font-weight:400; font-size:0.8rem; opacity:0.85; margin-top:0.1rem; }
+.cmd-terminal { background:#0F172A; color:#E2E8F0; padding:1.1rem 1.5rem; font-size:0.92rem;
+  display:flex; align-items:center; gap:0.6rem; overflow-x:auto; }
+.cmd-terminal .prompt { color:#4ADE80; user-select:none; }
+.cmd-terminal code { white-space:nowrap; flex:1; }
+.copy-btn { flex-shrink:0; margin-left:auto; background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.25); color:#E2E8F0; border-radius:8px;
+  padding:0.35rem 0.75rem; font-size:0.8rem; font-family:'Noto Sans KR',sans-serif;
+  font-weight:500; cursor:pointer; }
+.copy-btn:hover { background:rgba(255,255,255,0.25); }
+.cmd-body { padding:1.3rem 1.5rem; }
+.cmd-result-label { color:var(--color-success); font-weight:700; font-size:0.9rem; margin-bottom:8px; }
+.big-easy { font-size:1.1rem; font-weight:500; margin-bottom:16px; }
+.mini-steps { display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+.mini-step { display:flex; align-items:flex-start; gap:10px; }
+.mini-step-num { flex-shrink:0; width:1.5rem; height:1.5rem; border-radius:50%;
+  background:var(--color-success-light); color:var(--color-success); font-weight:700;
+  font-size:0.8rem; display:flex; align-items:center; justify-content:center; }
+.mini-step-text { font-size:0.95rem; }
+.callout { border-radius:10px; padding:12px 16px; font-size:0.9rem; margin-top:12px; }
+.callout.tip { background:var(--color-warning-light); border-left:4px solid var(--color-warning); }
+.callout.result { background:#F1F5F9; border-left:4px solid var(--color-muted); font-family:'JetBrains Mono',monospace; font-size:0.82rem; white-space:pre-wrap; }
+.callout.note { background:var(--color-success-light); border-left:4px solid var(--color-success); }
+
+/* UI 안내 박스 */
+.ui-box { background:#EDE9FE; border:1px solid #C4B5FD; border-radius:16px; padding:24px; margin:30px 0; }
+.ui-box h3 { color:#6D28D9; margin-bottom:12px; font-size:1.2rem; }
+.ui-box ol { margin-left:20px; }
+.ui-box li { margin:8px 0; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>🔍 실습 가이드 OpenSearch 데이터 확인</h1>
+  <p>안전지역 침범 데이터가 OpenSearch에 잘 쌓였는지 확인하고, 직접 검색하는 8가지 방법</p>
+  <div class="pills">
+    <span class="pill">📦 데이터 확인</span>
+    <span class="pill">🔎 검색</span>
+    <span class="pill">📊 집계</span>
+    <span class="pill">curl 명령어</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- 한눈에 보기 -->
+  <div class="overview">
+    <h2>📋 한눈에 보기 — 확인 순서</h2>
+    <div class="flow">
+      <div class="flow-node">1. 연결확인<br>살아있나?</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">3. 개수<br>몇 건?</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">4. 내용보기<br>뭐가 들었나?</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">5~8. 검색<br>찾아보기</div>
+    </div>
+    <div class="callout note" style="margin-top:18px;">
+      💡 <strong>핵심:</strong> OpenSearch는 "<strong>curl</strong>(명령어로 질문 보내기)"로 데이터를 확인합니다.
+      질문을 보내면 OpenSearch가 JSON(이름표 붙은 데이터)으로 답합니다. 처음엔 명령어로,
+      익숙해지면 <strong>웹 화면(Dashboards)</strong>으로 보면 됩니다. (맨 아래 참고)
+    </div>
+  </div>
+
+  <h2 class="section-title">📦 먼저, 데이터가 있는지 확인</h2>
+
+  <!-- 1 -->
+  <div class="cmd-card" style="--accent:#64748B;">
+    <div class="cmd-head">
+      <span class="cmd-badge">1</span><span class="cmd-emoji">🔌</span>
+      <div class="cmd-name">연결 확인<small>OpenSearch가 살아있나?</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>curl http://192.168.0.36:9200</code>
+      <button class="copy-btn" data-cmd="curl http://192.168.0.36:9200">📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">OpenSearch가 <strong>"나 살아있어요"</strong>라고 자기소개를 답해줍니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text">버전 번호와 이름이 적힌 JSON이 나오면 정상입니다.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text">아무 응답이 없거나 "Connection refused"면 OpenSearch가 안 켜진 것 (docker ps 확인).</span></div>
+      </div>
+      <div class="callout tip">💡 <strong>192.168.0.36</strong>은 4070 머신 주소, <strong>9200</strong>은 OpenSearch 포트입니다.</div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="cmd-card" style="--accent:#64748B;">
+    <div class="cmd-head">
+      <span class="cmd-badge">2</span><span class="cmd-emoji">🗂️</span>
+      <div class="cmd-name">인덱스 목록<small>데이터 칸이 어떤 게 있나?</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>curl http://192.168.0.36:9200/_cat/indices?v</code>
+      <button class="copy-btn" data-cmd="curl http://192.168.0.36:9200/_cat/indices?v">📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">OpenSearch 안에 있는 <strong>데이터 서랍(인덱스) 목록</strong>이 표로 나옵니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text">목록에 <code>safety-zone-events</code>가 보이면 우리 침범 데이터 서랍이 잘 만들어진 것.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text"><code>docs.count</code> 칸 숫자가 지금까지 쌓인 침범 건수입니다.</span></div>
+      </div>
+      <div class="callout tip">💡 <strong>인덱스</strong> = 엑셀 파일 한 개 같은 것. 우리 데이터는 <code>safety-zone-events</code>라는 인덱스에 들어갑니다.</div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="cmd-card" style="--accent:#2563EB;">
+    <div class="cmd-head">
+      <span class="cmd-badge">3</span><span class="cmd-emoji">🔢</span>
+      <div class="cmd-name">데이터 개수<small>침범이 총 몇 건?</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>curl "http://192.168.0.36:9200/safety-zone-events/_count?pretty"</code>
+      <button class="copy-btn" data-cmd='curl "http://192.168.0.36:9200/safety-zone-events/_count?pretty"'>📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">지금까지 쌓인 침범 이벤트가 <strong>총 몇 건인지 숫자</strong>로 답해줍니다.</p>
+      <div class="callout result">{
+  "count" : 47,      ← 지금까지 47건 쌓임
+  "_shards" : { ... }
+}</div>
+      <div class="callout tip">💡 <code>?pretty</code>를 붙이면 JSON이 보기 좋게 줄바꿈되어 나옵니다. 빼면 한 줄로 나와요.</div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="cmd-card" style="--accent:#2563EB;">
+    <div class="cmd-head">
+      <span class="cmd-badge">4</span><span class="cmd-emoji">👀</span>
+      <div class="cmd-name">최근 5건 보기<small>실제로 뭐가 들었나?</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>curl "http://192.168.0.36:9200/safety-zone-events/_search?size=5&sort=timestamp:desc&pretty"</code>
+      <button class="copy-btn" data-cmd='curl "http://192.168.0.36:9200/safety-zone-events/_search?size=5&sort=timestamp:desc&pretty"'>📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">가장 <strong>최근 침범 5건</strong>의 실제 내용을 들여다봅니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text"><code>_source</code> 안에 {시각, 작업자번호, 거리, 심각도}가 들어있습니다.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text"><code>size=5</code>는 5건만, <code>sort=timestamp:desc</code>는 최신순 정렬이란 뜻.</span></div>
+      </div>
+      <div class="callout result">"_source" : {
+  "timestamp" : "2026-06-30T11:22:01Z",
+  "worker_id" : "W-3",
+  "distance_cm" : 31.0,
+  "severity" : "mid"
+}</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">🔎 이제, 검색·집계 (OpenSearch의 진짜 힘)</h2>
+
+  <!-- 5 -->
+  <div class="cmd-card" style="--accent:#7C3AED;">
+    <div class="cmd-head">
+      <span class="cmd-badge">5</span><span class="cmd-emoji">📊</span>
+      <div class="cmd-name">작업자별 집계<small>누가 몇 번 침범했나?</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>bash opensearch_check.sh 5</code>
+      <button class="copy-btn" data-cmd="bash opensearch_check.sh 5">📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">한 번의 질문으로 <strong>작업자별 침범 횟수와 가장 가까웠던 거리</strong>를 계산해줍니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text">W-1은 몇 번, W-3은 몇 번… 자동으로 묶어서 세어줍니다.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text">이게 <strong>집계(aggregation)</strong> — 수천 건도 순식간에 묶어 계산합니다.</span></div>
+      </div>
+      <div class="callout note">✨ <strong>이게 핵심!</strong> 일반 DB라면 직접 계산해야 하지만, OpenSearch는 "묶어서 세어줘"라고 질문만 하면 됩니다.</div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="cmd-card" style="--accent:#7C3AED;">
+    <div class="cmd-head">
+      <span class="cmd-badge">6</span><span class="cmd-emoji">🚨</span>
+      <div class="cmd-name">고위험만 검색<small>30cm 이내 침범만</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>bash opensearch_check.sh 6</code>
+      <button class="copy-btn" data-cmd="bash opensearch_check.sh 6">📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">거리가 <strong>30cm보다 가까운 위험한 침범만</strong> 골라서 보여줍니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text"><code>range</code> 검색 — "거리 30cm 미만" 같은 숫자 조건으로 거릅니다.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text">가장 가까운 것부터 정렬되어 나옵니다.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="cmd-card" style="--accent:#D97706;">
+    <div class="cmd-head">
+      <span class="cmd-badge">7</span><span class="cmd-emoji">🔤</span>
+      <div class="cmd-name">키워드 검색<small>message에서 단어 찾기</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>bash opensearch_check.sh 7</code>
+      <button class="copy-btn" data-cmd="bash opensearch_check.sh 7">📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">메시지 글 안에서 <strong>"침범"이라는 단어가 든 기록</strong>을 찾아줍니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text">이게 <strong>전문 검색(full-text)</strong> — 구글처럼 글 속 단어를 찾는 기능.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text">일반 DB는 이게 느리지만, OpenSearch는 검색엔진이라 빠릅니다.</span></div>
+      </div>
+      <div class="callout tip">💡 "error", "disconnect" 같은 다른 단어로 바꿔서도 검색해보세요.</div>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="cmd-card" style="--accent:#059669;">
+    <div class="cmd-head">
+      <span class="cmd-badge">8</span><span class="cmd-emoji">⏰</span>
+      <div class="cmd-name">시간범위 검색<small>최근 1시간 침범</small></div>
+    </div>
+    <div class="cmd-terminal">
+      <span class="prompt">$</span><code>bash opensearch_check.sh 8</code>
+      <button class="copy-btn" data-cmd="bash opensearch_check.sh 8">📋 복사</button>
+    </div>
+    <div class="cmd-body">
+      <div class="cmd-result-label">▶ 이렇게 하면</div>
+      <p class="big-easy">최근 <strong>1시간 안에 일어난 침범</strong>만 골라줍니다.</p>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="mini-step-num">1</span><span class="mini-step-text"><code>now-1h</code> = "지금부터 1시간 전까지"라는 시간 표현.</span></div>
+        <div class="mini-step"><span class="mini-step-num">2</span><span class="mini-step-text"><code>now-20m</code>으로 바꾸면 "20분 전 침범" 검색이 됩니다 (대시보드와 같은 원리).</span></div>
+      </div>
+      <div class="callout note">✨ 대시보드의 "20분 전 침범자 찾기"가 바로 이 시간범위 검색을 쓴 것입니다.</div>
+    </div>
+  </div>
+
+  <!-- 웹 UI 안내 -->
+  <div class="ui-box">
+    <h3>🖥️ 명령어가 어려우면 — 웹 화면(Dashboards)으로 보기</h3>
+    <p style="margin-bottom:14px;">curl 명령어 대신, 브라우저에서 마우스로 클릭하며 데이터를 볼 수도 있습니다.</p>
+    <ol>
+      <li>브라우저에서 <code>http://192.168.0.36:5601</code> 접속</li>
+      <li>왼쪽 메뉴에서 <strong>Discover</strong> 클릭</li>
+      <li>인덱스 패턴으로 <code>safety-zone-events</code> 선택 (처음 한 번만 설정)</li>
+      <li>시간 막대그래프 + 침범 기록 목록이 화면에 보입니다</li>
+      <li>위쪽 검색창에 <code>severity: high</code> 같은 조건을 넣어 필터링</li>
+    </ol>
+    <div class="callout note" style="margin-top:14px;">
+      ✨ <strong>토론 팁:</strong> 여러 브라우저(라즈베리파이/NUC/PC)에서 Dashboards를 동시에 띄우고,
+      각자 다른 필터를 걸어 "나는 이렇게 보인다"를 비교하면 토론이 활발해집니다.
+    </div>
+  </div>
+
+  <!-- 추천 순서 -->
+  <div class="overview" style="margin-top:36px;">
+    <h2>✅ 추천 실행 순서</h2>
+    <p style="margin-bottom:10px;">처음이면 이 순서로 하나씩 해보세요:</p>
+    <p style="font-size:1.05rem;"><strong>1번(연결)</strong> → <strong>3번(개수)</strong> → <strong>4번(내용보기)</strong> 으로 "데이터가 있다"를 확인한 뒤,
+    <strong>5번(집계)</strong> → <strong>8번(시간검색)</strong> 으로 "검색이 된다"를 체험하면 OpenSearch의 힘이 한눈에 들어옵니다.</p>
+    <div class="callout tip" style="margin-top:14px;">
+      ⚠️ <strong>데이터가 0건이면?</strong> 침범이 한 번도 없었거나 감지기가 안 돌고 있는 것입니다.
+      NUC에서 <code>python3 intrusion_detector.py --simulate</code>로 가상 데이터를 좀 쌓은 뒤 다시 확인해보세요.
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(btn.dataset.cmd).then(() => {
+      const old = btn.textContent;
+      btn.textContent = '✅ 복사됨';
+      setTimeout(() => { btn.textContent = old; }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>
