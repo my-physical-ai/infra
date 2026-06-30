@@ -1,8 +1,0 @@
-# NUC (감지+송출) 의존성
-flask==3.0.3          # 녹화 영상 서버용
-ultralytics>=8.3.0       # YOLO26 + BoT-SORT
-pyrealsense2>=2.55.1     # RealSense
-opencv-python>=4.9.0     # 박스 오버레이
-numpy>=1.26.4
-requests==2.31.0
-# 추가로 시스템 패키지 필요: sudo apt install ffmpeg
