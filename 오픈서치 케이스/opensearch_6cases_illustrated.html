@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>산업 OpenSearch 사례 6선 - 사례별 맞춤 이미지</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --os: #0891B2; --os-light: #CFFAFE; --os-dark: #164E63;
+      --accent: #7C3AED; --accent-light: #EDE9FE;
+      --manuf: #D97706; --manuf-light: #FEF3C7;
+      --energy: #059669; --energy-light: #D1FAE5;
+      --infra: #DB2777; --infra-light: #FCE7F3;
+      --danger: #DC2626; --danger-light: #FEE2E2;
+      --surface: #F8FAFC; --card: #FFFFFF; --text: #1E293B; --muted: #64748B; --border: #E2E8F0;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); line-height: 1.75; }
+    code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+    section { padding: 3rem 0; }
+    .section-title { font-size: 1.9rem; font-weight: 900; line-height: 1.3; margin-bottom: 0.5rem; }
+    .section-title .num { display: inline-block; background: var(--os); color: white; width: 2.4rem; height: 2.4rem; line-height: 2.4rem; text-align: center; border-radius: 12px; font-size: 1.3rem; margin-right: 0.6rem; vertical-align: middle; }
+    .section-lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+    p { margin-bottom: 1rem; } strong { font-weight: 700; }
+
+    .hero { background: linear-gradient(135deg, #0C3B4D 0%, #0891B2 55%, #22D3EE 100%); color: white; padding: 4rem 0 3.5rem; position: relative; overflow: hidden; }
+    .hero::after { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, transparent 0 60px, rgba(255,255,255,0.05) 60px 62px); opacity: 0.7; }
+    .hero .container { position: relative; z-index: 1; }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .pill { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); padding: 0.35rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 500; }
+    .hero h1 { font-size: 2.4rem; font-weight: 900; line-height: 1.2; margin-bottom: 1rem; }
+    .hero h1 .accent { color: #A5F3FC; }
+    .hero-subtitle { font-size: 1.12rem; opacity: 0.95; max-width: 720px; }
+
+    .notice-band { background: var(--energy-light); border-bottom: 3px solid var(--energy); padding: 1.1rem 0; }
+    .notice-inner { display: flex; gap: 1rem; align-items: flex-start; }
+    .notice-inner .ni { font-size: 1.5rem; flex-shrink: 0; }
+    .notice-inner .nt { font-size: 0.93rem; line-height: 1.6; }
+    .notice-inner .nt b { color: #065F46; }
+
+    /* 사례 카드 (이미지 상단) */
+    .case-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin: 2rem 0; box-shadow: 0 4px 16px -4px rgba(0,0,0,0.1); overflow: hidden; }
+    .case-img { width: 100%; display: block; }
+    .case-img svg { width: 100%; height: auto; display: block; }
+    .case-head { padding: 1.1rem 1.4rem; color: white; display: flex; align-items: center; gap: 0.85rem; }
+    .case-head.manuf { background: linear-gradient(135deg, #D97706, #B45309); }
+    .case-head.energy { background: linear-gradient(135deg, #059669, #047857); }
+    .case-head.infra { background: linear-gradient(135deg, #DB2777, #9D174D); }
+    .case-head.os { background: linear-gradient(135deg, #0891B2, #164E63); }
+    .case-num { background: rgba(255,255,255,0.25); width: 2.2rem; height: 2.2rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; flex-shrink: 0; }
+    .case-title { font-weight: 800; font-size: 1.1rem; }
+    .case-title .sub { display: block; font-size: 0.78rem; opacity: 0.88; font-weight: 500; }
+    .case-body { padding: 1.4rem; }
+    .case-body p { margin-bottom: 0.75rem; }
+    .case-body p:last-child { margin-bottom: 0; }
+    .case-metric { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--os-light); color: var(--os-dark); font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.7rem; border-radius: 8px; margin: 0.2rem 0.3rem 0.2rem 0; }
+    .case-tag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 6px; }
+    .tag-manuf { background: var(--manuf-light); color: #92400E; }
+    .tag-energy { background: var(--energy-light); color: #065F46; }
+    .tag-infra { background: var(--infra-light); color: #9D174D; }
+    .tag-os { background: var(--os-light); color: var(--os-dark); }
+    .source-link { font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; font-style: italic; }
+
+    .callout { display: flex; gap: 0.85rem; padding: 1rem 1.25rem; border-radius: 10px; align-items: flex-start; margin: 1.25rem 0; }
+    .callout-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .callout-content { font-size: 0.95rem; line-height: 1.65; }
+    .callout-info { background: var(--os-light); border-left: 3px solid var(--os); }
+    .callout-warn { background: var(--manuf-light); border-left: 3px solid var(--manuf); }
+
+    .code-block { background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.83rem; line-height: 1.7; overflow-x: auto; margin: 1rem 0; }
+    .code-block .cmt { color: #64748b; } .code-block .hl2 { color: #fcd34d; } .code-block .fn { color: #93c5fd; }
+
+    .bigman-box { background: var(--accent-light); border: 2px dashed var(--accent); border-radius: 14px; padding: 1.75rem; margin: 1.5rem 0; }
+    .bigman-box .bm-title { font-weight: 900; color: var(--accent); margin-bottom: 0.75rem; font-size: 1.1rem; }
+
+    footer { background: var(--text); color: #cbd5e1; padding: 2rem 0; text-align: center; font-size: 0.85rem; }
+
+    @media (max-width: 768px) { .hero h1 { font-size: 1.7rem; } .section-title { font-size: 1.5rem; } }
+    @media print {
+      .hero { background: white !important; color: black !important; }
+      .hero h1 .accent { color: #0891B2 !important; }
+      .case-head, .bigman-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="container">
+      <div class="hero-tags">
+        <span class="pill">🏭 제조</span>
+        <span class="pill">⚡ 에너지·환경</span>
+        <span class="pill">🚢 물류·인프라</span>
+        <span class="pill">🖼️ 사례별 맞춤 이미지</span>
+      </div>
+      <h1><span class="accent">산업 OpenSearch 사례 6選</span><br>사례마다 그림으로 보기</h1>
+      <p class="hero-subtitle">
+        핵심 6개 사례에 <strong>각각 그 상황에 맞는 이미지</strong>를 직접 그려 넣었습니다.
+        진동 센서, 수질 모니터링, 해운 관제 등 — 무엇을 하는 사례인지 한눈에 보입니다.
+      </p>
+    </div>
+  </header>
+
+  <div class="notice-band">
+    <div class="container">
+      <div class="notice-inner">
+        <span class="ni">🖼️</span>
+        <span class="nt">
+          <b>이미지 안내 —</b> 글로벌 사이트에 실제 사례 이미지가 있으나 외부 링크는 차단(hotlink)되므로,
+          각 사례에 맞춰 <strong>교육용 일러스트를 직접 그려 파일에 내장</strong>했습니다. 오프라인·인쇄에서도 항상 보입니다.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="container">
+
+      <!-- ===== 사례 1: 예측정비 (진동) ===== -->
+      <div class="case-card">
+        <div class="case-img">
+          <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+            <rect width="800" height="260" fill="#FFFBEB"/>
+            <!-- 모터 -->
+            <rect x="60" y="120" width="130" height="90" rx="10" fill="#D97706"/>
+            <circle cx="125" cy="165" r="30" fill="#FbBf24" stroke="#92400E" stroke-width="4"/>
+            <circle cx="125" cy="165" r="10" fill="#92400E"/>
+            <rect x="60" y="210" width="130" height="12" fill="#78350F"/>
+            <text x="125" y="240" text-anchor="middle" font-size="12" font-weight="700" fill="#92400E">산업용 모터</text>
+            <!-- 진동파 -->
+            <path d="M195,150 q10,-20 20,0 q10,20 20,0 q10,-20 20,0" fill="none" stroke="#DC2626" stroke-width="3"/>
+            <text x="225" y="135" text-anchor="middle" font-size="10" fill="#DC2626" font-weight="700">진동!</text>
+            <!-- 센서 -->
+            <rect x="280" y="135" width="70" height="55" rx="8" fill="#1E293B"/>
+            <circle cx="315" cy="155" r="8" fill="#22d3ee"/>
+            <text x="315" y="182" text-anchor="middle" font-size="9" fill="#94a3b8">진동센서</text>
+            <!-- 화살표 -->
+            <line x1="350" y1="162" x2="410" y2="162" stroke="#334155" stroke-width="2" marker-end="url(#a1)"/>
+            <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#334155"/></marker></defs>
+            <!-- OpenSearch 진동 차트 -->
+            <rect x="420" y="70" width="330" height="150" rx="10" fill="#0f172a"/>
+            <text x="436" y="94" font-size="11" fill="#22d3ee" font-weight="700">🔍 OpenSearch — 진동 이상탐지</text>
+            <polyline points="436,180 476,175 516,182 556,150 596,120 636,90 676,130 716,175 736,178" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+            <line x1="436" y1="115" x2="736" y2="115" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="4"/>
+            <text x="700" y="110" font-size="8" fill="#f87171">임계선</text>
+            <circle cx="636" cy="90" r="6" fill="#DC2626"/>
+            <text x="636" y="78" text-anchor="middle" font-size="8" fill="#f87171" font-weight="700">이상!</text>
+            <rect x="560" y="192" width="180" height="20" rx="4" fill="#7f1d1d"/>
+            <text x="650" y="206" text-anchor="middle" font-size="9" fill="#fca5a5">🔴 정비팀 알림 발송</text>
+          </svg>
+        </div>
+        <div class="case-head manuf"><span class="case-num">1</span><span class="case-title">Digital Matter — 진동 기반 예측정비<span class="sub">제조 · 계획외 다운타임 30% 이상 감소</span></span></div>
+        <div class="case-body">
+          <p><span class="case-tag tag-manuf">예측정비</span></p>
+          <p>산업용 모터에 진동 센서를 부착해 <strong>진동 패턴의 미묘한 변화</strong>를 OpenSearch로 실시간 분석합니다. 초기 마모 단계를 조기에 발견해 고장 전에 수리를 예약함으로써, 계획외 다운타임을 30% 이상 줄였습니다.</p>
+          <p><span class="case-metric">📉 다운타임 30%+ 감소</span><span class="case-metric">🔧 조기 마모 감지</span></p>
+          <p class="source-link">출처: Digital Matter — IoT Sensor Monitoring for Manufacturing (그림은 교육용 재현)</p>
+        </div>
+      </div>
+
+      <!-- ===== 사례 2: 수질·토양 모니터링 ===== -->
+      <div class="case-card">
+        <div class="case-img">
+          <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+            <rect width="800" height="260" fill="#ECFEFF"/>
+            <!-- 물/땅 -->
+            <rect x="0" y="180" width="800" height="80" fill="#7DD3FC"/>
+            <rect x="0" y="220" width="800" height="40" fill="#92400E" opacity="0.5"/>
+            <path d="M0,180 q100,-15 200,0 t200,0 t200,0 t200,0" fill="#38BDF8" opacity="0.6"/>
+            <!-- 센서 프로브 -->
+            <g>
+              <rect x="120" y="90" width="16" height="110" fill="#334155"/>
+              <rect x="110" y="70" width="36" height="28" rx="4" fill="#059669"/>
+              <circle cx="128" cy="84" r="5" fill="#4ade80"/>
+              <text x="128" y="62" text-anchor="middle" font-size="9" fill="#065F46" font-weight="700">수질센서</text>
+            </g>
+            <g>
+              <rect x="230" y="110" width="16" height="100" fill="#334155"/>
+              <rect x="220" y="90" width="36" height="28" rx="4" fill="#059669"/>
+              <circle cx="238" cy="104" r="5" fill="#4ade80"/>
+              <text x="238" y="82" text-anchor="middle" font-size="9" fill="#065F46" font-weight="700">토양센서</text>
+            </g>
+            <!-- 무선 전송 -->
+            <path d="M150,80 q40,-30 80,0" fill="none" stroke="#0891B2" stroke-width="2" stroke-dasharray="4"/>
+            <text x="330" y="60" font-size="18">📶</text>
+            <line x1="360" y1="90" x2="420" y2="90" stroke="#334155" stroke-width="2" marker-end="url(#a2)"/>
+            <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#334155"/></marker></defs>
+            <!-- OpenSearch 대시보드 -->
+            <rect x="430" y="40" width="330" height="150" rx="10" fill="#0f172a"/>
+            <text x="446" y="64" font-size="11" fill="#22d3ee" font-weight="700">🔍 OpenSearch — 수질 대시보드</text>
+            <rect x="446" y="78" width="90" height="45" rx="6" fill="#1e293b"/>
+            <text x="491" y="96" text-anchor="middle" font-size="8" fill="#94a3b8">pH</text>
+            <text x="491" y="115" text-anchor="middle" font-size="16" font-weight="800" fill="#4ade80">7.2</text>
+            <rect x="546" y="78" width="90" height="45" rx="6" fill="#1e293b"/>
+            <text x="591" y="96" text-anchor="middle" font-size="8" fill="#94a3b8">탁도</text>
+            <text x="591" y="115" text-anchor="middle" font-size="16" font-weight="800" fill="#fbbf24">낮음</text>
+            <rect x="646" y="78" width="98" height="45" rx="6" fill="#1e293b"/>
+            <text x="695" y="96" text-anchor="middle" font-size="8" fill="#94a3b8">하루 처리</text>
+            <text x="695" y="115" text-anchor="middle" font-size="15" font-weight="800" fill="#22d3ee">90GB</text>
+            <text x="446" y="145" font-size="9" fill="#cbd5e1">📈 수질 추이 (2분마다 갱신)</text>
+            <polyline points="446,175 506,168 566,172 626,165 686,170 736,163" fill="none" stroke="#22d3ee" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="case-head energy"><span class="case-num">2</span><span class="case-title">ICCW — 농촌 수질·토양 모니터링<span class="sub">환경 · 하루 90GB · 2분마다 갱신</span></span></div>
+        <div class="case-body">
+          <p><span class="case-tag tag-energy">환경 모니터링</span></p>
+          <p>인도 마을의 건강 문제를 조사하기 위해 <strong>수질·토양 센서</strong>를 설치하고, AWS IoT + OpenSearch로 하루 90GB 데이터를 분석하며 2분마다 대시보드를 갱신합니다. 수질 변화를 실시간 추적해 지역 건강 사건과의 상관관계를 분석합니다.</p>
+          <p><span class="case-metric">📊 하루 90GB 분석</span><span class="case-metric">⏱️ 2분 갱신</span></p>
+          <p class="source-link">출처: AWS — Amazon OpenSearch Service Customers (그림은 교육용 재현)</p>
+        </div>
+      </div>
+
+      <!-- ===== 사례 3: 생성형 AI 예측정비 (벡터 RAG) ===== -->
+      <div class="case-card">
+        <div class="case-img">
+          <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+            <rect width="800" height="260" fill="#F5F3FF"/>
+            <!-- 센서 데이터 -->
+            <rect x="40" y="100" width="110" height="60" rx="8" fill="#1e293b"/>
+            <text x="95" y="125" text-anchor="middle" font-size="10" fill="#94a3b8">센서 판독값</text>
+            <text x="95" y="145" text-anchor="middle" font-size="11" font-family="JetBrains Mono" fill="#22d3ee">진동=8.2</text>
+            <line x1="150" y1="130" x2="195" y2="130" stroke="#334155" stroke-width="2" marker-end="url(#a3)"/>
+            <defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#334155"/></marker></defs>
+            <!-- 매뉴얼 PDF → 벡터 -->
+            <g>
+              <rect x="40" y="30" width="60" height="50" rx="4" fill="#fff" stroke="#7C3AED" stroke-width="2"/>
+              <text x="70" y="52" text-anchor="middle" font-size="16">📄</text>
+              <text x="70" y="70" text-anchor="middle" font-size="8" fill="#5B21B6">장비매뉴얼</text>
+              <path d="M100,55 L150,55" stroke="#7C3AED" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#a3b)"/>
+              <defs><marker id="a3b" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#7C3AED"/></marker></defs>
+            </g>
+            <!-- OpenSearch 벡터 인덱스 -->
+            <rect x="200" y="40" width="200" height="140" rx="10" fill="#0f172a"/>
+            <text x="300" y="64" text-anchor="middle" font-size="11" fill="#a78bfa" font-weight="700">🔍 OpenSearch 벡터 인덱스</text>
+            <!-- 벡터 점들 -->
+            <circle cx="250" cy="100" r="6" fill="#a78bfa"/><circle cx="285" cy="90" r="6" fill="#a78bfa"/>
+            <circle cx="320" cy="110" r="6" fill="#a78bfa"/><circle cx="270" cy="130" r="6" fill="#c4b5fd"/>
+            <circle cx="330" cy="145" r="6" fill="#c4b5fd"/><circle cx="300" cy="120" r="8" fill="#f472b6"/>
+            <text x="300" y="170" text-anchor="middle" font-size="9" fill="#94a3b8">k-NN 유사도 검색 (RAG)</text>
+            <line x1="400" y1="110" x2="445" y2="110" stroke="#334155" stroke-width="2" marker-end="url(#a3)"/>
+            <!-- AI 판정 -->
+            <rect x="450" y="60" width="310" height="140" rx="10" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+            <text x="605" y="88" text-anchor="middle" font-size="12" font-weight="800" fill="#5B21B6">🤖 생성형 AI 판정</text>
+            <text x="470" y="118" font-size="11" fill="#4c1d95">"진동 8.2는 이 모터 매뉴얼 기준</text>
+            <text x="470" y="138" font-size="11" fill="#4c1d95"> 정상 범위(5.0) 초과입니다."</text>
+            <rect x="470" y="152" width="270" height="32" rx="6" fill="#DC2626"/>
+            <text x="605" y="173" text-anchor="middle" font-size="11" fill="white" font-weight="700">⚠️ 베어링 교체 권장 · 정비 예약</text>
+          </svg>
+        </div>
+        <div class="case-head manuf"><span class="case-num">3</span><span class="case-title">AWS 생성형 AI 예측정비<span class="sub">에너지·제조 · 벡터 인덱스 RAG</span></span></div>
+        <div class="case-body">
+          <p><span class="case-tag tag-manuf">제조</span> <span class="case-tag tag-energy">에너지</span></p>
+          <p>장비 매뉴얼(PDF)의 <strong>벡터 임베딩을 OpenSearch 벡터 인덱스에 저장</strong>하고, 센서값이 들어오면 RAG로 매뉴얼 사양과 비교해 AI가 이상 여부를 판정합니다. McKinsey는 중형 정유소가 신뢰성 문제로 연 2,000만~5,000만 달러를 손실한다고 추정합니다.</p>
+          <p><span class="case-metric">💰 연 손실 $2천만~5천만 절감 잠재</span><span class="case-metric">🤖 매뉴얼 대조 RAG</span></p>
+          <p class="source-link">출처: AWS Industries — Predictive maintenance with GenAI agents (그림은 교육용 재현)</p>
+        </div>
+      </div>
+
+      <!-- ===== 사례 4: Hapag-Lloyd 해운 관제 ===== -->
+      <div class="case-card">
+        <div class="case-img">
+          <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+            <rect width="800" height="260" fill="#FDF2F8"/>
+            <rect x="0" y="190" width="800" height="70" fill="#93C5FD" opacity="0.5"/>
+            <!-- 컨테이너선 -->
+            <g>
+              <path d="M60,175 L250,175 L230,205 L80,205 Z" fill="#DB2777"/>
+              <rect x="90" y="145" width="30" height="30" fill="#F472B6"/>
+              <rect x="122" y="145" width="30" height="30" fill="#FbBf24"/>
+              <rect x="154" y="145" width="30" height="30" fill="#F472B6"/>
+              <rect x="186" y="145" width="30" height="30" fill="#FbBf24"/>
+              <rect x="90" y="120" width="30" height="25" fill="#FbBf24"/>
+              <rect x="154" y="120" width="30" height="25" fill="#F472B6"/>
+              <text x="155" y="230" text-anchor="middle" font-size="11" font-weight="700" fill="#9D174D">컨테이너선 (20개 클라우드 제품)</text>
+            </g>
+            <!-- 신호 -->
+            <text x="290" y="120" font-size="20">📡</text>
+            <line x1="330" y1="120" x2="390" y2="120" stroke="#334155" stroke-width="2" marker-end="url(#a4)"/>
+            <defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#334155"/></marker></defs>
+            <!-- OpenSearch 중앙 로깅 -->
+            <rect x="400" y="40" width="360" height="170" rx="10" fill="#0f172a"/>
+            <text x="416" y="64" font-size="11" fill="#22d3ee" font-weight="700">🔍 OpenSearch — 중앙 로깅·관측성</text>
+            <!-- 로그 라인들 -->
+            <rect x="416" y="78" width="328" height="18" rx="3" fill="#1e293b"/>
+            <text x="424" y="91" font-size="8" font-family="JetBrains Mono" fill="#4ade80">✓ product-01  API 200  응답 45ms</text>
+            <rect x="416" y="100" width="328" height="18" rx="3" fill="#1e293b"/>
+            <text x="424" y="113" font-size="8" font-family="JetBrains Mono" fill="#fbbf24">⚠ product-08  지연 상승 320ms</text>
+            <rect x="416" y="122" width="328" height="18" rx="3" fill="#1e293b"/>
+            <text x="424" y="135" font-size="8" font-family="JetBrains Mono" fill="#4ade80">✓ product-15  정상</text>
+            <!-- 요약 바 -->
+            <rect x="416" y="150" width="105" height="48" rx="6" fill="#1e293b"/>
+            <text x="468" y="170" text-anchor="middle" font-size="8" fill="#94a3b8">모니터링 제품</text>
+            <text x="468" y="190" text-anchor="middle" font-size="18" font-weight="800" fill="#22d3ee">20</text>
+            <rect x="530" y="150" width="105" height="48" rx="6" fill="#1e293b"/>
+            <text x="582" y="170" text-anchor="middle" font-size="8" fill="#94a3b8">리소스</text>
+            <text x="582" y="190" text-anchor="middle" font-size="18" font-weight="800" fill="#a78bfa">수천</text>
+            <rect x="644" y="150" width="100" height="48" rx="6" fill="#1e293b"/>
+            <text x="694" y="170" text-anchor="middle" font-size="8" fill="#94a3b8">해결시간</text>
+            <text x="694" y="190" text-anchor="middle" font-size="16" font-weight="800" fill="#4ade80">단축</text>
+          </svg>
+        </div>
+        <div class="case-head infra"><span class="case-num">4</span><span class="case-title">Hapag-Lloyd — 해운 클라우드 인프라 관제<span class="sub">물류 · 20개 제품 중앙 로깅</span></span></div>
+        <div class="case-body">
+          <p><span class="case-tag tag-infra">물류 인프라</span></p>
+          <p>2020년 AWS 이전 후 <strong>수천 개 리소스로 구성된 20개 클라우드 제품</strong>을 모니터링하기 위해 OpenSearch 중앙 집중식 로깅을 도입, 개발팀의 문제 해결 시간을 단축하고 제품 성능 가시성을 크게 개선했습니다.</p>
+          <p><span class="case-metric">📦 20개 제품 통합 관제</span><span class="case-metric">⚡ 문제 해결 시간 단축</span></p>
+          <p class="source-link">출처: AWS — Amazon OpenSearch Service Customers (그림은 교육용 재현)</p>
+        </div>
+      </div>
+
+      <!-- ===== 사례 5: Zurich 비용 절감 ===== -->
+      <div class="case-card">
+        <div class="case-img">
+          <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+            <rect width="800" height="260" fill="#FDF2F8"/>
+            <!-- 수천개 앱 로그 유입 -->
+            <text x="90" y="50" text-anchor="middle" font-size="11" font-weight="700" fill="#9D174D">수천 개 앱 로그</text>
+            <g fill="#DB2777">
+              <rect x="40" y="65" width="100" height="12" rx="3" opacity="0.9"/>
+              <rect x="40" y="82" width="100" height="12" rx="3" opacity="0.7"/>
+              <rect x="40" y="99" width="100" height="12" rx="3" opacity="0.9"/>
+              <rect x="40" y="116" width="100" height="12" rx="3" opacity="0.6"/>
+              <rect x="40" y="133" width="100" height="12" rx="3" opacity="0.8"/>
+              <rect x="40" y="150" width="100" height="12" rx="3" opacity="0.7"/>
+              <rect x="40" y="167" width="100" height="12" rx="3" opacity="0.9"/>
+            </g>
+            <line x1="145" y1="120" x2="200" y2="120" stroke="#334155" stroke-width="2" marker-end="url(#a5)"/>
+            <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#334155"/></marker></defs>
+            <!-- OpenSearch + S3 하이브리드 -->
+            <rect x="205" y="70" width="150" height="100" rx="10" fill="#0f172a"/>
+            <text x="280" y="94" text-anchor="middle" font-size="10" fill="#22d3ee" font-weight="700">🔍 OpenSearch</text>
+            <text x="280" y="112" text-anchor="middle" font-size="8" fill="#94a3b8">뜨거운 데이터</text>
+            <text x="280" y="140" text-anchor="middle" font-size="20">🗄️</text>
+            <text x="280" y="160" text-anchor="middle" font-size="8" fill="#94a3b8">+ S3 (장기 보관)</text>
+            <!-- 절감 효과 큰 화살표 -->
+            <line x1="355" y1="120" x2="410" y2="120" stroke="#059669" stroke-width="2" marker-end="url(#a5b)"/>
+            <defs><marker id="a5b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#059669"/></marker></defs>
+            <!-- 비용 절감 결과 -->
+            <rect x="420" y="55" width="340" height="150" rx="10" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+            <text x="590" y="82" text-anchor="middle" font-size="12" font-weight="800" fill="#065F46">💰 비용 절감 성과</text>
+            <!-- 막대 1 -->
+            <text x="440" y="115" font-size="10" fill="#065F46">SIEM 데이터 수집</text>
+            <rect x="440" y="122" width="300" height="20" rx="4" fill="#a7f3d0"/>
+            <rect x="440" y="122" width="45" height="20" rx="4" fill="#059669"/>
+            <text x="730" y="137" text-anchor="end" font-size="11" font-weight="800" fill="#065F46">▼ 85%</text>
+            <!-- 막대 2 -->
+            <text x="440" y="165" font-size="10" fill="#065F46">저장 로그 GB당 비용</text>
+            <rect x="440" y="172" width="300" height="20" rx="4" fill="#a7f3d0"/>
+            <rect x="440" y="172" width="141" height="20" rx="4" fill="#059669"/>
+            <text x="730" y="187" text-anchor="end" font-size="11" font-weight="800" fill="#065F46">▼ 53%</text>
+          </svg>
+        </div>
+        <div class="case-head infra"><span class="case-num">5</span><span class="case-title">Zurich Insurance — 로그 관제 비용 최적화<span class="sub">인프라 · SIEM 수집 85%↓</span></span></div>
+        <div class="case-body">
+          <p><span class="case-tag tag-infra">인프라 관제</span></p>
+          <p>수천 개 애플리케이션의 로그를 <strong>OpenSearch + S3 하이브리드</strong>로 관리해, SIEM 데이터 수집을 85% 줄이고 저장 로그 GB당 53% 비용 절감을 전망하며 규정 준수를 유지했습니다.</p>
+          <p><span class="case-metric">📉 SIEM 수집 85%↓</span><span class="case-metric">💰 GB당 53% 절감</span></p>
+          <p class="source-link">출처: AWS — Amazon OpenSearch Service Customers (그림은 교육용 재현)</p>
+        </div>
+      </div>
+
+      <!-- ===== 사례 6: MQTT 오픈소스 파이프라인 ===== -->
+      <div class="case-card">
+        <div class="case-img">
+          <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+            <rect width="800" height="260" fill="#ECFEFF"/>
+            <!-- 여러 IoT 기기 -->
+            <g>
+              <rect x="40" y="70" width="50" height="40" rx="6" fill="#0891B2"/><text x="65" y="95" text-anchor="middle" font-size="16">🌡️</text>
+              <rect x="40" y="120" width="50" height="40" rx="6" fill="#0891B2"/><text x="65" y="145" text-anchor="middle" font-size="16">⚙️</text>
+              <rect x="40" y="170" width="50" height="40" rx="6" fill="#0891B2"/><text x="65" y="195" text-anchor="middle" font-size="16">💡</text>
+              <text x="65" y="228" text-anchor="middle" font-size="9" fill="#164E63" font-weight="700">IoT 기기들</text>
+            </g>
+            <!-- MQTT 브로커 -->
+            <line x1="90" y1="140" x2="135" y2="140" stroke="#334155" stroke-width="2" marker-end="url(#a6)"/>
+            <defs><marker id="a6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#334155"/></marker></defs>
+            <rect x="140" y="105" width="120" height="70" rx="10" fill="#334155"/>
+            <text x="200" y="135" text-anchor="middle" font-size="18">🔀</text>
+            <text x="200" y="155" text-anchor="middle" font-size="10" fill="#e2e8f0" font-weight="700">MQTT 브로커</text>
+            <text x="200" y="168" text-anchor="middle" font-size="8" fill="#94a3b8">Coreflux (pub/sub)</text>
+            <line x1="260" y1="140" x2="305" y2="140" stroke="#334155" stroke-width="2" marker-end="url(#a6)"/>
+            <!-- OpenSearch -->
+            <rect x="310" y="95" width="150" height="90" rx="10" fill="#CFFAFE" stroke="#0891B2" stroke-width="2"/>
+            <text x="385" y="130" text-anchor="middle" font-size="24">🔍</text>
+            <text x="385" y="152" text-anchor="middle" font-size="11" font-weight="800" fill="#164E63">OpenSearch</text>
+            <text x="385" y="168" text-anchor="middle" font-size="8" fill="#0891B2">색인·검색</text>
+            <line x1="460" y1="140" x2="505" y2="140" stroke="#334155" stroke-width="2" marker-end="url(#a6)"/>
+            <!-- 대시보드 -->
+            <rect x="510" y="70" width="250" height="140" rx="10" fill="#0f172a"/>
+            <text x="526" y="94" font-size="10" fill="#22d3ee" font-weight="700">📊 실시간 IoT 대시보드</text>
+            <polyline points="526,170 576,160 626,165 676,145 726,150 745,148" fill="none" stroke="#22d3ee" stroke-width="2"/>
+            <rect x="526" y="105" width="70" height="35" rx="5" fill="#1e293b"/>
+            <text x="561" y="120" text-anchor="middle" font-size="7" fill="#94a3b8">기기 가동</text>
+            <text x="561" y="134" text-anchor="middle" font-size="13" font-weight="800" fill="#4ade80">100%</text>
+            <rect x="606" y="105" width="70" height="35" rx="5" fill="#1e293b"/>
+            <text x="641" y="120" text-anchor="middle" font-size="7" fill="#94a3b8">센서값</text>
+            <text x="641" y="134" text-anchor="middle" font-size="13" font-weight="800" fill="#fbbf24">실시간</text>
+          </svg>
+        </div>
+        <div class="case-head os"><span class="case-num">6</span><span class="case-title">Coreflux + DigitalOcean — MQTT·OpenSearch<span class="sub">산업 모니터링 · 오픈소스 실전 구현</span></span></div>
+        <div class="case-body">
+          <p><span class="case-tag tag-os">오픈소스 구현</span></p>
+          <p>여러 IoT 기기가 <strong>MQTT 브로커(Coreflux)</strong>로 데이터를 보내고, 관리형 OpenSearch가 색인·검색해 실시간 대시보드로 시각화합니다. 산업 시스템 모니터링, 환경 추적, 스마트홈까지 폭넓게 적용 가능한 오픈소스 파이프라인입니다.</p>
+          <div class="code-block" style="margin:0.5rem 0 0;">
+IoT 기기 → <span class="fn">MQTT</span>(paho) → <span class="hl2">OpenSearch</span>(opensearch-py) → 대시보드</div>
+          <p class="source-link">출처: DigitalOcean Community — Deploying OpenSearch with Coreflux MQTT (그림은 교육용 재현)</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 빅맨 대입 -->
+  <section style="background: var(--card);">
+    <div class="container">
+      <h2 class="section-title"><span class="num">🚀</span>빅맨 시스템에 대입</h2>
+      <div class="bigman-box">
+        <div class="bm-title">안전구역 침입 감지 = 위 6개 사례의 결합</div>
+        <div class="code-block" style="margin:0.5rem 0;">
+<span class="cmt"># 위 사례              →  빅맨 안전구역 시스템</span>
+사례1 진동 예측정비    →  침입 패턴 조기 감지
+사례2 실시간 대시보드  →  팀별 안전구역 관제 화면
+사례3 벡터 RAG        →  <span class="hl2">k-NN 작업자 ReID</span>
+사례6 MQTT 파이프라인  →  RealSense → NUC → OpenSearch
+        </div>
+        <p style="margin-bottom:0;">빅맨님 4팀 안전구역 시스템은 이 6개 산업 사례의 <strong>핵심 요소를 모두 담은 축소판</strong>입니다. 센서(RealSense/YOLO)로 감지하고, OpenSearch로 저장·집계·검색하며, 대시보드로 관제하고, k-NN으로 작업자 재식별까지 — 검증된 산업 아키텍처를 그대로 구현한 것입니다.</p>
+      </div>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <span class="callout-content"><strong>이미지 출처 안내:</strong> 각 사례 그림은 해당 기업의 실제 화면 캡처가 아니라, 사례 내용을 바탕으로 <strong>교육용으로 직접 그린 일러스트</strong>입니다. 성과 수치(다운타임 30%↓, 90GB, 85%↓ 등)는 AWS·DigitalOcean 등 글로벌 사이트에서 확인한 인용 값입니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      🖼️ 산업 OpenSearch 사례 6選 · 사례별 맞춤 이미지 · 빅맨 피지컬 AI 교육
+    </div>
+  </footer>
+
+</body>
+</html>
