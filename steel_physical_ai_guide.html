@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>철강 산업의 피지컬 AI — 카메라부터 현장 적용까지</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-primary: #D97706;
+      --color-primary-light: #FEF3C7;
+      --color-secondary: #7C3AED;
+      --color-secondary-light: #EDE9FE;
+      --color-success: #059669;
+      --color-success-light: #D1FAE5;
+      --color-warning: #D97706;
+      --color-warning-light: #FEF3C7;
+      --color-danger: #DC2626;
+      --color-danger-light: #FEE2E2;
+      --color-surface: #F8FAFC;
+      --color-card: #FFFFFF;
+      --color-text: #1E293B;
+      --color-muted: #64748B;
+      --color-border: #E2E8F0;
+      --color-steel: #475569;
+      --color-steel-light: #F1F5F9;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; color: var(--color-text); background: var(--color-surface); line-height: 1.75; }
+    code { font-family: 'JetBrains Mono', monospace; background: #F1F5F9; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.88em; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+    section { padding: 3rem 0; }
+
+    /* === 히어로 === */
+    .hero {
+      background: linear-gradient(135deg, #1C1917 0%, #78350F 50%, #D97706 100%);
+      color: white; padding: 4rem 0 3.5rem; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -40%; right: -15%;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(217,119,6,0.3) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; position: relative; }
+    .hero-tag {
+      background: rgba(255,255,255,0.15); backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.2); color: white;
+      padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+    }
+    .hero h1 { font-size: 2.5rem; font-weight: 900; line-height: 1.25; margin-bottom: 1rem; position: relative; }
+    .hero-subtitle { font-size: 1.1rem; opacity: 0.9; line-height: 1.7; max-width: 700px; position: relative; }
+    .hero-subtitle strong { color: #FCD34D; }
+
+    /* === 섹션 제목 === */
+    .section-title { font-size: 1.85rem; font-weight: 900; line-height: 1.3; margin-bottom: 0.75rem; }
+    .section-subtitle { font-size: 1.05rem; color: var(--color-muted); margin-bottom: 2rem; line-height: 1.6; }
+
+    /* === 수치 카드 === */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+    .stat-card {
+      background: var(--color-card); border-radius: 12px; padding: 1.5rem; text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--color-border);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .stat-number { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+    .stat-label { font-weight: 700; font-size: 0.88rem; margin-top: 0.5rem; }
+    .stat-desc { font-size: 0.78rem; color: var(--color-muted); margin-top: 0.25rem; }
+
+    /* === 플로우 다이어그램 === */
+    .flow-diagram {
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 1.5rem 1rem; background: var(--color-surface); border-radius: 16px; overflow-x: auto;
+    }
+    .flow-node {
+      background: var(--color-card); border: 2px solid var(--node-color, var(--color-primary));
+      border-radius: 12px; padding: 0.8rem 1rem; text-align: center; min-width: 100px;
+      transition: transform 0.2s;
+    }
+    .flow-node:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+    .flow-node-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
+    .flow-node-title { font-weight: 700; font-size: 0.8rem; }
+    .flow-node-desc { font-size: 0.7rem; color: var(--color-muted); margin-top: 0.15rem; }
+    .flow-arrow { flex-shrink: 0; }
+
+    /* === 비유 박스 === */
+    .analogy-box {
+      display: flex; gap: 1.25rem; padding: 1.5rem; border-radius: 12px; border-left: 4px solid;
+    }
+    .analogy-icon { font-size: 2.5rem; flex-shrink: 0; }
+    .analogy-title { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .analogy-text { line-height: 1.7; }
+
+    /* === 비교 카드 (3열) === */
+    .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    .compare-card {
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); background: var(--color-card);
+    }
+    .compare-header { padding: 1.25rem; color: white; text-align: center; }
+    .compare-header h4 { margin: 0.4rem 0 0; font-size: 1rem; }
+    .compare-icon { font-size: 2rem; }
+    .compare-body { padding: 1rem; }
+    .compare-item {
+      display: flex; justify-content: space-between; padding: 0.6rem 0;
+      border-bottom: 1px solid var(--color-border); font-size: 0.88rem;
+    }
+    .compare-item:last-child { border-bottom: none; }
+    .compare-label { color: var(--color-muted); }
+    .compare-value { font-weight: 700; text-align: right; max-width: 55%; }
+
+    /* === 사례 카드 === */
+    .case-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    .case-card {
+      display: flex; gap: 1.25rem; padding: 1.5rem; background: var(--color-card);
+      border-radius: 14px; border: 1px solid var(--color-border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.2s;
+    }
+    .case-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .case-num {
+      flex-shrink: 0; width: 3rem; height: 3rem; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 900; color: white;
+    }
+    .case-content h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .case-content p { font-size: 0.9rem; color: var(--color-muted); line-height: 1.6; }
+    .case-tag {
+      display: inline-block; padding: 0.15rem 0.5rem; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600; margin-top: 0.5rem;
+    }
+
+    /* === 계층 구조도 === */
+    .arch-diagram {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+      padding: 2rem; background: var(--color-surface); border-radius: 16px;
+    }
+    .arch-layer {
+      width: 100%; max-width: 700px; border: 2px solid var(--layer-color);
+      border-radius: 12px; padding: 1.1rem; background: white;
+    }
+    .arch-layer-label {
+      font-weight: 700; color: var(--layer-color); font-size: 0.8rem;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;
+    }
+    .arch-boxes { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .arch-box {
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 8px; padding: 0.4rem 0.8rem; font-size: 0.82rem; font-weight: 500;
+    }
+    .arch-connector { color: var(--color-muted); font-size: 1.1rem; padding: 0.2rem 0; }
+
+    /* === 적합성 매트릭스 === */
+    .matrix-table {
+      width: 100%; border-collapse: collapse; font-size: 0.88rem;
+      background: var(--color-card); border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .matrix-table th {
+      background: var(--color-steel); color: white; padding: 0.8rem 1rem;
+      text-align: left; font-weight: 700; font-size: 0.82rem;
+    }
+    .matrix-table td {
+      padding: 0.7rem 1rem; border-bottom: 1px solid var(--color-border);
+      vertical-align: top;
+    }
+    .matrix-table tr:last-child td { border-bottom: none; }
+    .matrix-table tr:hover td { background: #FEFCE8; }
+    .badge-yes { background: var(--color-success-light); color: #065F46; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .badge-no { background: var(--color-danger-light); color: #991B1B; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .badge-ok { background: var(--color-warning-light); color: #92400E; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+
+    /* === 로드맵 === */
+    .roadmap { position: relative; padding-left: 2.5rem; }
+    .roadmap::before {
+      content: ''; position: absolute; left: 0.9rem; top: 0; bottom: 0; width: 3px;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-secondary), var(--color-success));
+      border-radius: 2px;
+    }
+    .roadmap-step {
+      position: relative; margin-bottom: 1.5rem; padding: 1.25rem;
+      background: var(--color-card); border-radius: 12px;
+      border: 1px solid var(--color-border);
+    }
+    .roadmap-step::before {
+      content: attr(data-step); position: absolute; left: -2.5rem; top: 1.25rem;
+      width: 1.8rem; height: 1.8rem; background: var(--step-color, var(--color-primary));
+      color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .roadmap-step h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .roadmap-step p { font-size: 0.88rem; color: var(--color-muted); line-height: 1.5; }
+
+    /* === CTA === */
+    .cta-box {
+      background: linear-gradient(135deg, #78350F, #D97706); color: white;
+      padding: 2.5rem; border-radius: 16px; text-align: center;
+    }
+    .cta-box h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 0.75rem; }
+    .cta-box p { font-size: 1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+    /* === 핵심 포인트 카드 === */
+    .key-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .key-card {
+      background: var(--color-card); border-radius: 12px; padding: 1.25rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--color-border); text-align: center;
+    }
+    .key-card-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .key-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .key-card-desc { font-size: 0.82rem; color: var(--color-muted); line-height: 1.5; }
+
+    /* === 반응형 === */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.8rem; }
+      .hero { padding: 2.5rem 0 2rem; }
+      .flow-diagram { flex-direction: column; }
+      .flow-arrow svg { transform: rotate(90deg); }
+      .case-card { flex-direction: column; }
+      .stat-number { font-size: 1.8rem; }
+      .section-title { font-size: 1.5rem; }
+      .matrix-table { font-size: 0.78rem; }
+      .matrix-table th, .matrix-table td { padding: 0.5rem; }
+    }
+    @media print {
+      .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .flow-node:hover, .stat-card:hover, .case-card:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== 히어로 ========== -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-tags">
+        <span class="hero-tag">🏭 철강 산업</span>
+        <span class="hero-tag">피지컬 AI</span>
+        <span class="hero-tag">머신비전</span>
+        <span class="hero-tag">RealSense</span>
+        <span class="hero-tag">YOLO</span>
+      </div>
+      <h1>철강 산업의 피지컬 AI<br>카메라부터 현장 적용까지</h1>
+      <p class="hero-subtitle">
+        철강 중소기업 AI 도입률은 사실상 <strong>0%에 가깝습니다.</strong>
+        그런데 포스코는 AI로 <strong>불량률 63%를 줄이고</strong>, 포항의 작은 공장은 AI로 <strong>펌프 고장을 예측</strong>합니다.
+        여러분이 배우는 기술이 이 격차를 메울 수 있습니다.
+      </p>
+    </div>
+  </header>
+
+  <!-- ========== 1. 왜 철강에 AI가 어려운가 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">🔥 왜 철강에 AI 도입이 어려운가?</h2>
+      <p class="section-subtitle">
+        철강은 제조업 중에서도 AI 적용이 가장 까다로운 환경입니다. 세 가지 구조적 장벽이 있습니다.
+      </p>
+      <div class="key-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+        <div class="key-card" style="border-top: 3px solid var(--color-danger);">
+          <div class="key-card-icon">🌡️</div>
+          <div class="key-card-title">1,500°C+ 고열 환경</div>
+          <div class="key-card-desc">일반 카메라·센서가 버틸 수 없는 극한 온도. 수냉 하우징이나 원거리 설치가 필수</div>
+        </div>
+        <div class="key-card" style="border-top: 3px solid var(--color-warning);">
+          <div class="key-card-icon">📊</div>
+          <div class="key-card-title">데이터 자체가 없음</div>
+          <div class="key-card-desc">중소 철강은 대부분 수기 기록. 센서 인프라 미비. AI 학습에 필요한 데이터 축적이 안 됨</div>
+        </div>
+        <div class="key-card" style="border-top: 3px solid var(--color-secondary);">
+          <div class="key-card-icon">👨‍🔧</div>
+          <div class="key-card-title">AI 인력 전무</div>
+          <div class="key-card-desc">중소 철강업체에 AI를 이해하고 현장에 적용할 수 있는 인력이 없음. 전체 AI 도입률 3.9%</div>
+        </div>
+      </div>
+
+      <div style="height: 2rem;"></div>
+
+      <div class="analogy-box" style="background: var(--color-danger-light); border-color: var(--color-danger);">
+        <div class="analogy-icon">⚠️</div>
+        <div>
+          <div class="analogy-title" style="color: var(--color-danger);">현실 인식</div>
+          <p class="analogy-text">
+            중소 철강기업 AI 도입률은 <strong>사실상 0%</strong>입니다. 90% 이상의 기업이 데이터를 수집하고도 활용하지 못합니다.
+            그런데 이것은 <strong>"위기"가 아니라 "기회"</strong>입니다 — 이 격차를 메울 수 있는 사람이 시장에 거의 없다는 뜻이니까요.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 2. 철강 AI 6대 적용 사례 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">🏭 철강 AI 6대 적용 사례</h2>
+      <p class="section-subtitle">
+        대기업부터 중소 공장까지, 이미 작동하고 있는 피지컬 AI 솔루션들입니다.
+      </p>
+
+      <div class="case-grid">
+        <div class="case-card">
+          <div class="case-num" style="background: linear-gradient(135deg, #DC2626, #F59E0B);">1</div>
+          <div class="case-content">
+            <h4>🔥 스마트 고로 — AI가 용광로를 제어</h4>
+            <p>포스코, 세계 최초 AI 고로 자동 제어. 30년 경력 숙련공의 "감"을 데이터로 대체.<br>
+            <strong>성과:</strong> 연간 쇳물 생산량 8.5만톤 ↑, 불량률 63% ↓, WEF 등대공장 선정</p>
+            <span class="case-tag" style="background: var(--color-secondary-light); color: #5B21B6;">센서 데이터 + ML 예측 모델</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-num" style="background: linear-gradient(135deg, #2563EB, #7C3AED);">2</div>
+          <div class="case-content">
+            <h4>👁️ 표면 결함 검출 — YOLO가 가장 뜨거운 분야</h4>
+            <p>NEU-DET 벤치마크 6종 결함(균열·개재물·패치·피팅·스케일·스크래치) 자동 분류.<br>
+            <strong>성과:</strong> YOLO 기반 모델 mAP 80~81.5%, 기존 육안 검사 한계 돌파</p>
+            <span class="case-tag" style="background: var(--color-primary-light); color: #92400E;">YOLO + 라인스캔 카메라</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-num" style="background: linear-gradient(135deg, #059669, #10B981);">3</div>
+          <div class="case-content">
+            <h4>🔧 설비 이상 예지 — 고장나기 전에 알려주는 AI</h4>
+            <p>포항 몰드 플럭스 공장: 펌프·노즐 센서 데이터로 고장 사전 예측.<br>
+            <strong>핵심:</strong> 기존 설비에 센서만 추가 → 가장 저비용 AI 도입 경로</p>
+            <span class="case-tag" style="background: var(--color-success-light); color: #065F46;">IoT 센서 + 이상탐지 AI</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-num" style="background: linear-gradient(135deg, #D97706, #F59E0B);">4</div>
+          <div class="case-content">
+            <h4>🤖 비정형 제품 크레인 자동 운송</h4>
+            <p>포스코, AI 비전으로 불규칙한 코일·슬라브 형상 인식 → 크레인 경로 자동 최적화.<br>
+            <strong>핵심:</strong> 20~40톤 코일 물류에서 작업자 사고 위험 제거</p>
+            <span class="case-tag" style="background: var(--color-warning-light); color: #92400E;">AI 비전 + 로봇 제어</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-num" style="background: linear-gradient(135deg, #7C3AED, #A78BFA);">5</div>
+          <div class="case-content">
+            <h4>🌡️ AI 온도·재질 예측 모델</h4>
+            <p>현대제철, 제강~냉연 빅데이터로 재질을 예측하여 보류재 대체 규격 자동 지정.<br>
+            <strong>성과:</strong> 처리 기한 준수율 향상, 품질 편차 리스크 감소</p>
+            <span class="case-tag" style="background: var(--color-secondary-light); color: #5B21B6;">빅데이터 + 예측 모델</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-num" style="background: linear-gradient(135deg, #DC2626, #EF4444);">6</div>
+          <div class="case-content">
+            <h4>🛡️ 스마트 안전 관리 — 여러분의 프로젝트와 동일!</h4>
+            <p>세아제강 '에버가드' 솔루션: 현장 데이터 기반 작업자 안전 모니터링 전 공장 확대.<br>
+            <strong>정부 지원:</strong> 50인 미만 사업장 스마트 안전장비 도입 비용 80%, 최대 3,000만원 지원</p>
+            <span class="case-tag" style="background: var(--color-danger-light); color: #991B1B;">AI CCTV + PPE 감지</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 3. 산업용 카메라 완전 비교 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">📷 산업용 카메라 완전 비교</h2>
+      <p class="section-subtitle">
+        카메라는 AI의 "눈"입니다. 용도에 따라 완전히 다른 카메라를 선택해야 합니다.
+      </p>
+
+      <!-- 비유 -->
+      <div class="analogy-box" style="background: var(--color-primary-light); border-color: var(--color-primary);">
+        <div class="analogy-icon">🎯</div>
+        <div>
+          <div class="analogy-title" style="color: var(--color-primary);">이해하기 쉽게!</div>
+          <p class="analogy-text">
+            <strong>라인 스캔</strong>은 복사기처럼 한 줄씩 읽으면서 긴 문서를 스캔합니다 → 빠르게 움직이는 강판에 적합<br>
+            <strong>에어리어 스캔</strong>은 스마트폰 카메라처럼 한 번에 전체 화면을 찍습니다 → 정지 물체·사람 감지에 적합<br>
+            <strong>깊이 카메라</strong>는 사람의 양쪽 눈처럼 거리를 측정합니다 → 로봇 가이던스·3D 측정에 적합
+          </p>
+        </div>
+      </div>
+
+      <div style="height: 2rem;"></div>
+
+      <!-- 3종 비교 카드 -->
+      <div class="compare-grid">
+        <div class="compare-card">
+          <div class="compare-header" style="background: linear-gradient(135deg, #1E3A8A, #2563EB);">
+            <div class="compare-icon">📏</div>
+            <h4>라인 스캔 카메라</h4>
+          </div>
+          <div class="compare-body">
+            <div class="compare-item"><span class="compare-label">원리</span><span class="compare-value">한 줄씩 연속 촬영</span></div>
+            <div class="compare-item"><span class="compare-label">해상도</span><span class="compare-value">4K~16K</span></div>
+            <div class="compare-item"><span class="compare-label">용도</span><span class="compare-value">강판 표면 결함 검출</span></div>
+            <div class="compare-item"><span class="compare-label">가격대</span><span class="compare-value">수백만~수천만 원</span></div>
+            <div class="compare-item"><span class="compare-label">인터페이스</span><span class="compare-value">CoaXPress / GigE</span></div>
+            <div class="compare-item"><span class="compare-label">대표 브랜드</span><span class="compare-value">뷰웍스, Basler, Teledyne DALSA</span></div>
+          </div>
+        </div>
+
+        <div class="compare-card">
+          <div class="compare-header" style="background: linear-gradient(135deg, #065F46, #059669);">
+            <div class="compare-icon">📸</div>
+            <h4>에어리어 스캔 / IP 카메라</h4>
+          </div>
+          <div class="compare-body">
+            <div class="compare-item"><span class="compare-label">원리</span><span class="compare-value">한 프레임 전체 촬영</span></div>
+            <div class="compare-item"><span class="compare-label">해상도</span><span class="compare-value">2MP~12MP</span></div>
+            <div class="compare-item"><span class="compare-label">용도</span><span class="compare-value">안전 모니터링, 정지 검사</span></div>
+            <div class="compare-item"><span class="compare-label">가격대</span><span class="compare-value">수십만 원</span></div>
+            <div class="compare-item"><span class="compare-label">인터페이스</span><span class="compare-value">GigE / USB3</span></div>
+            <div class="compare-item"><span class="compare-label">대표 브랜드</span><span class="compare-value">Basler, Hikvision, Hanwha Vision</span></div>
+          </div>
+        </div>
+
+        <div class="compare-card">
+          <div class="compare-header" style="background: linear-gradient(135deg, #5B21B6, #7C3AED);">
+            <div class="compare-icon">🔮</div>
+            <h4>깊이 카메라 (RealSense)</h4>
+          </div>
+          <div class="compare-body">
+            <div class="compare-item"><span class="compare-label">원리</span><span class="compare-value">스테레오 깊이 측정</span></div>
+            <div class="compare-item"><span class="compare-label">해상도</span><span class="compare-value">1280×720 (깊이+RGB)</span></div>
+            <div class="compare-item"><span class="compare-label">용도</span><span class="compare-value">로봇 가이던스, 3D 측정</span></div>
+            <div class="compare-item"><span class="compare-label">가격대</span><span class="compare-value">20~40만 원</span></div>
+            <div class="compare-item"><span class="compare-label">인터페이스</span><span class="compare-value">USB3</span></div>
+            <div class="compare-item"><span class="compare-label">현재 상태</span><span class="compare-value">2025.7 독립 회사로 분사, $50M 투자</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4. RealSense 적합성 매트릭스 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">🔮 RealSense, 철강에서 쓸 수 있는가?</h2>
+      <p class="section-subtitle">
+        결론: <strong>쓸 수 있습니다.</strong> 다만 용도에 따라 적합성이 다릅니다.
+      </p>
+
+      <div class="analogy-box" style="background: var(--color-secondary-light); border-color: var(--color-secondary);">
+        <div class="analogy-icon">💡</div>
+        <div>
+          <div class="analogy-title" style="color: var(--color-secondary);">RealSense의 현재</div>
+          <p class="analogy-text">
+            2025년 7월, Intel에서 독립 회사 <strong>RealSense Inc.</strong>로 분사. $50M 시리즈 A 투자 유치.
+            NVIDIA Jetson Thor·Isaac Sim과 전략적 협력 체결. <strong>"피지컬 AI의 핵심 감지 플랫폼"</strong>으로 재포지셔닝.
+            전 세계 AMR·휴머노이드의 60%가 RealSense를 사용 중입니다.
+          </p>
+        </div>
+      </div>
+
+      <div style="height: 1.5rem;"></div>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th style="width:30%">철강 현장 용도</th>
+            <th style="width:15%">RealSense</th>
+            <th style="width:55%">이유</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>로봇 피킹/가이던스</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">코일·빌렛 3D 위치 파악</span></td>
+            <td><span class="badge-yes">✅ 적합</span></td>
+            <td>깊이 정보로 비정형 제품의 3D 좌표 측정 가능. D435/D455 스테레오 깊이 활용</td>
+          </tr>
+          <tr>
+            <td><strong>3D 안전구역 침입 감지</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">실제 거리 기반 경고</span></td>
+            <td><span class="badge-yes">✅ 적합</span></td>
+            <td>2D 카메라의 원근 오류 없이 실제 거리 측정. 위험구역 3m 이내 접근 시 정확한 경고</td>
+          </tr>
+          <tr>
+            <td><strong>부피·치수 자동 측정</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">제품 두께·폭·높이</span></td>
+            <td><span class="badge-yes">✅ 적합</span></td>
+            <td>비접촉 3D 측정으로 적재 높이, 제품 치수 자동 기록 가능</td>
+          </tr>
+          <tr>
+            <td><strong>교육용 프로토타이핑</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">YOLO + 깊이 정보 결합</span></td>
+            <td><span class="badge-yes">✅ 최적</span></td>
+            <td>20~40만 원 가격, Python SDK 완비. 교실에서 3D AI 파이프라인 실습에 최적</td>
+          </tr>
+          <tr>
+            <td><strong>열연/냉연 표면 결함 검출</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">초속 수십m 이동 강판</span></td>
+            <td><span class="badge-no">❌ 부적합</span></td>
+            <td>해상도(720p)와 FPS 부족. µm 결함 검출에는 4K~16K 라인 스캔 필요</td>
+          </tr>
+          <tr>
+            <td><strong>고온 환경 직접 노출</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">고로·전로 근처</span></td>
+            <td><span class="badge-no">❌ 부적합</span></td>
+            <td>동작 온도 0~35°C. 수냉 하우징 없이는 사용 불가. 산업용 열화상 카메라 필요</td>
+          </tr>
+          <tr>
+            <td><strong>장거리 야적장 모니터링</strong><br><span style="color:var(--color-muted);font-size:0.8rem;">10m+ 거리</span></td>
+            <td><span class="badge-ok">⚠️ 제한적</span></td>
+            <td>유효 깊이 0.3~3m. 장거리에서는 LiDAR나 산업용 ToF 필요</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 5. 기술 파이프라인: 교육 → 산업 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">🔄 하나의 파이프라인, 카메라만 교체</h2>
+      <p class="section-subtitle">
+        핵심 통찰: AI 파이프라인(YOLO → ByteTrack → OpenVINO → 행동)은 <strong>카메라가 바뀌어도 동일</strong>합니다.
+        카메라는 "눈"을 바꾸는 것이고, "뇌"와 "신경계"는 그대로 재사용됩니다.
+      </p>
+
+      <!-- 교육 파이프라인 -->
+      <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-success); margin-bottom: 0.75rem;">📚 교육 환경 (교실)</h3>
+      <div class="flow-diagram" style="border: 2px solid var(--color-success);">
+        <div class="flow-node" style="--node-color: #7C3AED;">
+          <div class="flow-node-icon">🔮</div>
+          <div class="flow-node-title">RealSense D435</div>
+          <div class="flow-node-desc">RGB + 깊이</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#059669" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #7C3AED;">
+          <div class="flow-node-icon">🔍</div>
+          <div class="flow-node-title">YOLO26</div>
+          <div class="flow-node-desc">객체 탐지</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#059669" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #D97706;">
+          <div class="flow-node-icon">🏷️</div>
+          <div class="flow-node-title">ByteTrack</div>
+          <div class="flow-node-desc">추적</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#059669" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #059669;">
+          <div class="flow-node-icon">⚡</div>
+          <div class="flow-node-title">OpenVINO</div>
+          <div class="flow-node-desc">CPU 실시간</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#059669" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #DC2626;">
+          <div class="flow-node-icon">🦾</div>
+          <div class="flow-node-title">로봇</div>
+          <div class="flow-node-desc">행동</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; padding: 1rem 0; font-size: 1.5rem; color: var(--color-primary); font-weight: 900;">눈만 바꾸면 ↓</div>
+
+      <!-- 산업 파이프라인 -->
+      <h3 style="font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem;">🏭 산업 현장 (철강 공장)</h3>
+      <div class="flow-diagram" style="border: 2px solid var(--color-primary);">
+        <div class="flow-node" style="--node-color: #DC2626;">
+          <div class="flow-node-icon">📏</div>
+          <div class="flow-node-title">라인스캔 / IP</div>
+          <div class="flow-node-desc">산업용 카메라</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#D97706" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #7C3AED;">
+          <div class="flow-node-icon">🔍</div>
+          <div class="flow-node-title">YOLO26</div>
+          <div class="flow-node-desc">동일 모델</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#D97706" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #D97706;">
+          <div class="flow-node-icon">🏷️</div>
+          <div class="flow-node-title">ByteTrack</div>
+          <div class="flow-node-desc">동일 추적</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#D97706" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #059669;">
+          <div class="flow-node-icon">⚡</div>
+          <div class="flow-node-title">OpenVINO</div>
+          <div class="flow-node-desc">동일 최적화</div>
+        </div>
+        <div class="flow-arrow"><svg width="30" height="20" viewBox="0 0 30 20"><path d="M0 10h22M16 3l7 7-7 7" stroke="#D97706" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="flow-node" style="--node-color: #DC2626;">
+          <div class="flow-node-icon">⚙️</div>
+          <div class="flow-node-title">PLC/크레인</div>
+          <div class="flow-node-desc">산업 장비</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 6. 중소 철강에 바로 적용 가능한 3가지 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">🚀 중소 철강, 지금 바로 시작할 수 있는 3가지</h2>
+      <p class="section-subtitle">
+        수십억 투자가 아닙니다. 카메라 한 대와 엣지 PC 하나로 시작하세요.
+      </p>
+
+      <div class="roadmap">
+        <div class="roadmap-step" data-step="1" style="--step-color: #2563EB;">
+          <h4>👁️ AI 비전 표면검사 — ROI가 가장 높음</h4>
+          <p>산업용 카메라 1~2대 + YOLO + 엣지 PC. NEU-DET 데이터셋으로 사전 학습 → 자사 제품으로 파인튜닝.
+          기존 육안으로 놓치던 1~3mm 미세 결함 조기 검출. <strong>대량 불량 사태 방지 = 즉시 ROI</strong></p>
+        </div>
+        <div class="roadmap-step" data-step="2" style="--step-color: #DC2626;">
+          <h4>🛡️ 스마트 안전 모니터링 — 도입이 가장 쉬움</h4>
+          <p>기존 CCTV에 YOLO PPE 감지 + ByteTrack 추적. 고열 구역 침입·안전모 미착용 실시간 경고.
+          <strong>정부 보조금 80% (최대 3,000만원)</strong> 활용 가능. 중대재해처벌법 대응 = 경영진 설득 용이</p>
+        </div>
+        <div class="roadmap-step" data-step="3" style="--step-color: #059669;">
+          <h4>🔧 설비 예지보전 — 장기 효과가 가장 큼</h4>
+          <p>기존 설비에 진동·온도·전류 센서 추가 → AI 이상 패턴 학습 → 고장 사전 예측.
+          정기점검 → 상태 기반 정비로 전환. <strong>비가동 시간 감소 = 생산성 직결</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 7. 글로벌 철강 AI 동향 ========== -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">🌏 글로벌 철강사도 움직이고 있다</h2>
+
+      <div class="stat-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+          <div class="stat-number" style="color: var(--color-primary); font-size: 1.8rem;">바오우 철강</div>
+          <div class="stat-label">4K 라인스캔 + 5G + AI</div>
+          <div class="stat-desc">자동차강판 표면검사</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" style="color: var(--color-secondary); font-size: 1.8rem;">일본제철</div>
+          <div class="stat-label">제로 결함 공정</div>
+          <div class="stat-desc">AI 비전 미세 결함 검출</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" style="color: var(--color-success); font-size: 1.8rem;">타타 스틸</div>
+          <div class="stat-label">FCC 시스템</div>
+          <div class="stat-desc">AI 최종 품질 검증</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" style="color: var(--color-danger); font-size: 1.8rem;">쿤밍 철강</div>
+          <div class="stat-label">AI 에너지 최적화</div>
+          <div class="stat-desc">2개월 만에 전력 7.84% 절감</div>
+        </div>
+      </div>
+
+      <div class="analogy-box" style="background: var(--color-success-light); border-color: var(--color-success);">
+        <div class="analogy-icon">📈</div>
+        <div>
+          <div class="analogy-title" style="color: var(--color-success);">한국 정부도 움직인다</div>
+          <p class="analogy-text">
+            산업부 <strong>'AI 팩토리'</strong> 사업: 2024년 26개 과제 → 2030년 100개+ 확대.
+            포스코 <strong>공정DX연구소·로봇AI연구그룹</strong> 신설(2026년 조직개편).
+            <strong>K-휴머노이드 얼라이언스</strong> 출범(40개+ 기업·연구기관).
+            AI 팩토리 수요조사에 <strong>519개 기업</strong> 몰려(전년 대비 2.4배).
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section>
+    <div class="container">
+      <div class="cta-box">
+        <h2>"없다"는 것이 기회입니다</h2>
+        <p>
+          철강 중소기업에 AI 성공사례가 거의 없다는 것은,<br>
+          여러분이 배우는 <strong>YOLO + ByteTrack + OpenVINO + Robot</strong> 기술을<br>
+          철강 현장에 적용할 수 있는 사람이 <strong>시장에 거의 없다</strong>는 뜻입니다.<br><br>
+          카메라 한 대와 엣지 PC 하나로 시작할 수 있는 기술을 가진 사람이,<br>
+          지금 한국 철강 중소기업 현장에 <strong>가장 필요한 인재</strong>입니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer style="text-align: center; padding: 2rem; color: var(--color-muted); font-size: 0.85rem;">
+    피지컬 AI 산업체험 프로젝트 · 철강 산업 심화편 · YOLO + ByteTrack + OpenVINO + Robot · 2026
+  </footer>
+
+</body>
+</html>

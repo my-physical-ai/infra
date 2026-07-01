@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 비전 모델 완전 가이드 — YOLO · SAM · VLM, 무엇이 다르고 어떻게 쓰는가</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--p:#7C3AED;--pl:#EDE9FE;--b:#2563EB;--bl:#DBEAFE;--g:#059669;--gl:#D1FAE5;--o:#D97706;--ol:#FEF3C7;--r:#DC2626;--rl:#FEE2E2;--cyan:#0891B2;--cl:#CFFAFE;--sf:#F8FAFC;--cd:#FFF;--tx:#1E293B;--mt:#64748B;--bd:#E2E8F0}
+    body{font-family:'Noto Sans KR',sans-serif;color:var(--tx);background:var(--sf);line-height:1.75}
+    code{font-family:'JetBrains Mono',monospace;background:#F1F5F9;padding:.12em .35em;border-radius:4px;font-size:.82em}
+    .c{max-width:920px;margin:0 auto;padding:0 1.5rem}
+    section{padding:2.5rem 0}
+    .hero{background:linear-gradient(135deg,#0c0118 0%,#1E3A8A 35%,#7C3AED 70%,#059669 100%);color:#fff;padding:3.5rem 0 3rem;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-40%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(124,58,237,.25) 0%,transparent 70%);border-radius:50%}
+    .htags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;position:relative}
+    .htag{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;padding:.22rem .65rem;border-radius:16px;font-size:.75rem;font-weight:500}
+    .hero h1{font-size:2.2rem;font-weight:900;line-height:1.25;margin-bottom:.8rem;position:relative}
+    .hero-s{font-size:1rem;opacity:.9;line-height:1.7;max-width:720px;position:relative}
+    .hero-s strong{color:#C4B5FD}
+    .st{font-size:1.65rem;font-weight:900;line-height:1.3;margin-bottom:.6rem}
+    .ss{font-size:.98rem;color:var(--mt);margin-bottom:1.6rem;line-height:1.6}
+    .ab{display:flex;gap:1rem;padding:1.2rem;border-radius:12px;border-left:4px solid;margin-bottom:1.2rem}
+    .ab-i{font-size:2rem;flex-shrink:0}
+    .ab-t{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.35rem}
+    .ab p{line-height:1.6;font-size:.92rem}
+    /* 가계도 */
+    .tree{display:flex;flex-direction:column;gap:0;padding:1.5rem;background:var(--sf);border-radius:16px}
+    .tree-layer{border:2px solid var(--lc);border-radius:12px;padding:1rem;background:var(--cd)}
+    .tree-label{font-weight:700;color:var(--lc);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+    .tree-label .layer-num{background:var(--lc);color:#fff;width:1.5rem;height:1.5rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem}
+    .tree-models{display:flex;gap:.5rem;flex-wrap:wrap}
+    .tree-model{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:.35rem .7rem;font-size:.8rem;font-weight:500}
+    .tree-model.highlight{background:var(--lc);color:#fff;border-color:var(--lc)}
+    .tree-desc{font-size:.78rem;color:var(--mt);margin-top:.4rem;line-height:1.4}
+    .tree-conn{text-align:center;color:var(--mt);font-size:.9rem;padding:.15rem 0}
+    /* 비교 3열 */
+    .cmp3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    .cmp-card{border-radius:14px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.07);background:var(--cd)}
+    .cmp-head{padding:1rem;color:#fff;text-align:center}
+    .cmp-head h4{margin:.3rem 0 0;font-size:.95rem}
+    .cmp-icon{font-size:2rem}
+    .cmp-body{padding:1rem}
+    .cmp-row{display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid var(--bd);font-size:.82rem}
+    .cmp-row:last-child{border-bottom:none}
+    .cmp-k{color:var(--mt)}
+    .cmp-v{font-weight:700;text-align:right;max-width:55%}
+    /* 사례 */
+    .case{padding:1.2rem;background:var(--cd);border-radius:14px;border-left:4px solid;box-shadow:0 2px 6px rgba(0,0,0,.04);margin-bottom:1rem}
+    .case-h{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}
+    .case-badge{padding:.18rem .55rem;border-radius:6px;font-size:.7rem;font-weight:700;color:#fff}
+    .case h4{font-size:.95rem;font-weight:700}
+    .case p{font-size:.85rem;color:var(--mt);line-height:1.55}
+    .case-stat{display:inline-flex;align-items:baseline;gap:.3rem;margin-top:.4rem;padding:.25rem .55rem;background:var(--gl);border-radius:6px;font-size:.78rem;font-weight:600;color:#065F46}
+    /* 파이프라인 */
+    .pipe{padding:1.5rem;border-radius:16px;border:2px solid var(--p);background:var(--sf);margin-bottom:1.5rem}
+    .pipe-title{font-weight:700;font-size:.9rem;color:var(--p);margin-bottom:1rem;text-align:center}
+    .pipe-flow{display:flex;align-items:stretch;gap:.3rem;overflow-x:auto}
+    .pipe-step{flex:1;min-width:110px;border:2px solid var(--ps-c,var(--bd));border-radius:10px;padding:.7rem .5rem;text-align:center;background:var(--cd)}
+    .pipe-step.active{background:var(--ps-bg,var(--pl));border-color:var(--ps-c)}
+    .ps-icon{font-size:1.3rem;margin-bottom:.15rem}
+    .ps-name{font-weight:700;font-size:.72rem}
+    .ps-model{font-size:.65rem;color:var(--mt);margin-top:.1rem}
+    .ps-out{font-size:.62rem;color:var(--ps-c);margin-top:.15rem;font-weight:600}
+    .pipe-arr{display:flex;align-items:center;flex-shrink:0;color:var(--p);font-size:.9rem;font-weight:900}
+    /* 모델 카드 */
+    .mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+    .mc{background:var(--cd);border-radius:12px;padding:1.1rem;box-shadow:0 2px 6px rgba(0,0,0,.05);border:1px solid var(--bd)}
+    .mc-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}
+    .mc-rank{font-size:1.2rem}
+    .mc h4{font-weight:700;font-size:.92rem}
+    .mc-tag{padding:.1rem .4rem;border-radius:4px;font-size:.65rem;font-weight:600}
+    .mc p{font-size:.78rem;color:var(--mt);line-height:1.5}
+    .mc-specs{margin-top:.5rem;font-size:.75rem}
+    .mc-spec{display:flex;justify-content:space-between;padding:.2rem 0;border-bottom:1px dotted var(--bd)}
+    .mc-spec:last-child{border-bottom:none}
+    /* 매트릭스 */
+    .mx{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--cd);border-radius:12px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+    .mx th{background:#4C1D95;color:#fff;padding:.6rem .7rem;text-align:left;font-weight:700;font-size:.75rem}
+    .mx td{padding:.55rem .7rem;border-bottom:1px solid var(--bd);vertical-align:top}
+    .mx tr:last-child td{border-bottom:none}
+    .by{background:var(--gl);color:#065F46;padding:.1rem .35rem;border-radius:4px;font-size:.68rem;font-weight:600}
+    .bn{background:var(--rl);color:#991B1B;padding:.1rem .35rem;border-radius:4px;font-size:.68rem;font-weight:600}
+    .bo{background:var(--ol);color:#92400E;padding:.1rem .35rem;border-radius:4px;font-size:.68rem;font-weight:600}
+    /* CTA */
+    .cta{background:linear-gradient(135deg,#1E3A8A,#7C3AED,#059669);color:#fff;padding:2.5rem;border-radius:16px;text-align:center;margin:1.5rem 0}
+    .cta h2{font-size:1.4rem;font-weight:900;margin-bottom:.6rem}
+    .cta p{font-size:.92rem;opacity:.9;max-width:620px;margin:0 auto;line-height:1.65}
+    /* stat */
+    .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem}
+    .sc{background:var(--cd);border-radius:10px;padding:1.1rem;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.04);border:1px solid var(--bd)}
+    .sc-n{font-size:1.8rem;font-weight:900;line-height:1}
+    .sc-l{font-weight:700;font-size:.82rem;margin-top:.4rem}
+    .sc-d{font-size:.72rem;color:var(--mt);margin-top:.2rem}
+    @media(max-width:768px){.hero h1{font-size:1.6rem}.hero{padding:2.5rem 0 2rem}.cmp3{grid-template-columns:1fr}.pipe-flow{flex-direction:column}.pipe-arr{justify-content:center;transform:rotate(90deg)}.st{font-size:1.3rem}}
+    @media print{.hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="c">
+    <div class="htags">
+      <span class="htag">YOLO</span><span class="htag">SAM</span><span class="htag">VLM</span><span class="htag">VLA</span>
+      <span class="htag">Grounded SAM</span><span class="htag">산업 파이프라인</span><span class="htag">모델 가계도</span>
+    </div>
+    <h1>AI 비전 모델 완전 가이드<br>YOLO · SAM · VLM, 무엇이 다르고 어떻게 쓰는가</h1>
+    <p class="hero-s">
+      SAM은 VLM이 아닙니다. YOLO도 VLM이 아닙니다.<br>
+      각각 <strong>"손가락(위치)"</strong>, <strong>"가위(윤곽)"</strong>, <strong>"전문가(이해·판단)"</strong>의 역할입니다.<br>
+      이 세 가지를 <strong>어떻게 조합하느냐</strong>가 산업 AI의 핵심입니다.
+    </p>
+  </div>
+</header>
+
+<!-- PART 1: 모델 가계도 -->
+<section>
+  <div class="c">
+    <h2 class="st">🧬 PART 1. AI 비전 모델 가계도 — 정확한 분류</h2>
+    <p class="ss">각 모델은 역할이 근본적으로 다릅니다. 혼동하면 잘못된 설계가 됩니다.</p>
+
+    <div class="tree">
+      <div class="tree-layer" style="--lc:var(--r)">
+        <div class="tree-label"><span class="layer-num">1</span> 객체 탐지 (Object Detection) — "어디에 뭐가 있는지 가리킨다"</div>
+        <div class="tree-models">
+          <span class="tree-model highlight">YOLO 시리즈</span>
+          <span class="tree-model">R-CNN</span><span class="tree-model">DETR</span><span class="tree-model">Grounding DINO</span>
+        </div>
+        <div class="tree-desc">출력: 바운딩 박스 + 클래스 라벨 + 신뢰도. 언어 이해 없음. "scratch, 0.87, [120,340]"</div>
+      </div>
+      <div class="tree-conn">↕</div>
+      <div class="tree-layer" style="--lc:var(--o)">
+        <div class="tree-label"><span class="layer-num">2</span> 세그멘테이션 (Segmentation) — "물체의 윤곽을 정밀하게 잘라낸다"</div>
+        <div class="tree-models">
+          <span class="tree-model highlight">SAM / SAM 2 / SAM 3</span>
+          <span class="tree-model">Mask R-CNN</span>
+        </div>
+        <div class="tree-desc">출력: 픽셀 단위 마스크. "이것이 무엇인지"는 모름. 마스크 생성기이지 라벨링 솔루션이 아님</div>
+      </div>
+      <div class="tree-conn">↕</div>
+      <div class="tree-layer" style="--lc:var(--b)">
+        <div class="tree-label"><span class="layer-num">3</span> 비전 파운데이션 (VFM) — "범용 시각 특징을 추출한다"</div>
+        <div class="tree-models">
+          <span class="tree-model highlight">DINOv2</span>
+          <span class="tree-model highlight">NV-DINOv2</span>
+          <span class="tree-model">SigLIP</span><span class="tree-model">CLIP</span>
+        </div>
+        <div class="tree-desc">출력: 시각 임베딩. 자기지도학습 기반. 다운스트림 작업의 백본으로 사용. 언어 없음</div>
+      </div>
+      <div class="tree-conn">↕</div>
+      <div class="tree-layer" style="--lc:var(--p);border-width:3px">
+        <div class="tree-label"><span class="layer-num">4</span> 비전 언어 모델 (VLM) — "보고, 이해하고, 설명하고, 판단한다" ⭐</div>
+        <div class="tree-models">
+          <span class="tree-model highlight">Qwen2.5-VL / Qwen3-VL</span>
+          <span class="tree-model highlight">Florence-2</span>
+          <span class="tree-model highlight">Moondream2</span>
+          <span class="tree-model">PaliGemma 2</span><span class="tree-model">LLaVA</span><span class="tree-model">InternVL3</span>
+          <span class="tree-model">Cosmos Reason</span><span class="tree-model">Llama 3.2 Vision</span>
+        </div>
+        <div class="tree-desc">출력: 자연어 설명 + 판단. 이미지+텍스트 동시 이해. "이 결함은 스크래치이며, 롤러 마모가 원인으로 추정됩니다"</div>
+      </div>
+      <div class="tree-conn">↕</div>
+      <div class="tree-layer" style="--lc:var(--g)">
+        <div class="tree-label"><span class="layer-num">5</span> 비전 언어 행동 (VLA) — "보고 + 이해하고 + 행동한다"</div>
+        <div class="tree-models">
+          <span class="tree-model highlight">π0 / π0-FAST</span>
+          <span class="tree-model">OpenVLA</span><span class="tree-model">RT-2</span><span class="tree-model">SmolVLA</span>
+        </div>
+        <div class="tree-desc">출력: 로봇 행동(Action). VLM + 로봇 제어가 통합. "빨간 컵을 집어" → 로봇팔이 실행</div>
+      </div>
+    </div>
+
+    <div style="height:1.5rem"></div>
+    <div class="ab" style="background:var(--ol);border-color:var(--o)">
+      <div class="ab-i">⚠️</div>
+      <div>
+        <div class="ab-t" style="color:var(--o)">SAM ≠ VLM</div>
+        <p>SAM은 <strong>"가위"</strong>입니다 — 물체의 윤곽을 정밀하게 잘라내지만, 그것이 무엇인지는 모릅니다. VLM은 <strong>"전문가"</strong>입니다 — 이미지를 보고 "이것은 스크래치이고, 원인은 롤러 마모"라고 판단합니다. SAM은 VLM의 한 형태가 아니라, <strong>VLM과 함께 쓰는 보완 도구</strong>입니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 2: YOLO vs SAM vs VLM 비교 -->
+<section style="background:#fff;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div class="c">
+    <h2 class="st">⚖️ PART 2. YOLO vs SAM vs VLM — 한 눈에 비교</h2>
+    <div class="cmp3">
+      <div class="cmp-card">
+        <div class="cmp-head" style="background:linear-gradient(135deg,#991B1B,var(--r))"><div class="cmp-icon">👆</div><h4>YOLO (손가락)</h4></div>
+        <div class="cmp-body">
+          <div class="cmp-row"><span class="cmp-k">하는 일</span><span class="cmp-v">위치+종류 찾기</span></div>
+          <div class="cmp-row"><span class="cmp-k">출력</span><span class="cmp-v">바운딩 박스</span></div>
+          <div class="cmp-row"><span class="cmp-k">속도</span><span class="cmp-v">30~200fps</span></div>
+          <div class="cmp-row"><span class="cmp-k">모델 크기</span><span class="cmp-v">3~25MB</span></div>
+          <div class="cmp-row"><span class="cmp-k">라벨링</span><span class="cmp-v">필수 (수천 장)</span></div>
+          <div class="cmp-row"><span class="cmp-k">새 결함</span><span class="cmp-v">❌ 불가</span></div>
+          <div class="cmp-row"><span class="cmp-k">설명</span><span class="cmp-v">❌ 불가</span></div>
+          <div class="cmp-row"><span class="cmp-k">산업 성숙도</span><span class="cmp-v">✅ 대규모 배포</span></div>
+        </div>
+      </div>
+      <div class="cmp-card">
+        <div class="cmp-head" style="background:linear-gradient(135deg,#92400E,var(--o))"><div class="cmp-icon">✂️</div><h4>SAM (가위)</h4></div>
+        <div class="cmp-body">
+          <div class="cmp-row"><span class="cmp-k">하는 일</span><span class="cmp-v">윤곽 정밀 추출</span></div>
+          <div class="cmp-row"><span class="cmp-k">출력</span><span class="cmp-v">픽셀 마스크</span></div>
+          <div class="cmp-row"><span class="cmp-k">속도</span><span class="cmp-v">10~44fps</span></div>
+          <div class="cmp-row"><span class="cmp-k">모델 크기</span><span class="cmp-v">300MB~2.4GB</span></div>
+          <div class="cmp-row"><span class="cmp-k">라벨링</span><span class="cmp-v">불필요 (제로샷)</span></div>
+          <div class="cmp-row"><span class="cmp-k">새 결함</span><span class="cmp-v">⚠️ 윤곽만</span></div>
+          <div class="cmp-row"><span class="cmp-k">설명</span><span class="cmp-v">❌ 불가</span></div>
+          <div class="cmp-row"><span class="cmp-k">산업 성숙도</span><span class="cmp-v">⚠️ PoC 단계</span></div>
+        </div>
+      </div>
+      <div class="cmp-card" style="border:2px solid var(--p)">
+        <div class="cmp-head" style="background:linear-gradient(135deg,#4C1D95,var(--p))"><div class="cmp-icon">🧠</div><h4>VLM (전문가)</h4></div>
+        <div class="cmp-body">
+          <div class="cmp-row"><span class="cmp-k">하는 일</span><span class="cmp-v">이해+판단+설명</span></div>
+          <div class="cmp-row"><span class="cmp-k">출력</span><span class="cmp-v">자연어 분석</span></div>
+          <div class="cmp-row"><span class="cmp-k">속도</span><span class="cmp-v">3~10초</span></div>
+          <div class="cmp-row"><span class="cmp-k">모델 크기</span><span class="cmp-v">0.5~7GB</span></div>
+          <div class="cmp-row"><span class="cmp-k">라벨링</span><span class="cmp-v">불필요 (제로샷)</span></div>
+          <div class="cmp-row"><span class="cmp-k">새 결함</span><span class="cmp-v">✅ 발견 가능</span></div>
+          <div class="cmp-row"><span class="cmp-k">설명</span><span class="cmp-v">✅ 원인+조치</span></div>
+          <div class="cmp-row"><span class="cmp-k">산업 성숙도</span><span class="cmp-v">🔥 배포 시작</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 3: 산업 적용 파이프라인 3종 -->
+<section>
+  <div class="c">
+    <h2 class="st">🔧 PART 3. 산업 적용 파이프라인 3가지 유형</h2>
+    <p class="ss">현장의 문제에 따라 조합이 달라집니다. 정답은 하나가 아닙니다.</p>
+
+    <!-- 파이프라인 A -->
+    <div class="pipe">
+      <div class="pipe-title">파이프라인 A: YOLO + SAM — 탐지 + 정밀 세그멘테이션</div>
+      <div class="pipe-flow">
+        <div class="pipe-step active" style="--ps-c:var(--r);--ps-bg:var(--rl)"><div class="ps-icon">📷</div><div class="ps-name">카메라</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--r);--ps-bg:var(--rl)"><div class="ps-icon">👆</div><div class="ps-name">YOLO</div><div class="ps-model">바운딩 박스</div><div class="ps-out">위치 + 종류</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--o);--ps-bg:var(--ol)"><div class="ps-icon">✂️</div><div class="ps-name">SAM</div><div class="ps-model">박스→마스크</div><div class="ps-out">정밀 윤곽</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step"><div class="ps-icon">📊</div><div class="ps-name">면적/치수 계산</div><div class="ps-out">결함 크기 정량화</div></div>
+      </div>
+    </div>
+
+    <div class="case" style="border-color:var(--o)">
+      <div class="case-h"><span class="case-badge" style="background:var(--o)">실제 연구</span><h4>YOLOv11 + SAM 2.1 — 정밀 세그멘테이션 (2025)</h4></div>
+      <p>YOLOv11을 파인튜닝하여 mAP50 96.2%를 달성하고, YOLO의 바운딩 박스를 SAM 2.1의 프롬프트로 전달하여 정밀 세그멘테이션을 수행했습니다. YOLO가 "어디에" 찾고, SAM이 "어떤 모양인지" 잘라냅니다.</p>
+      <div class="case-stat">mAP50 96.2% · Precision 92.5% · IoU 0.910</div>
+    </div>
+
+    <div class="case" style="border-color:var(--o)">
+      <div class="case-h"><span class="case-badge" style="background:var(--o)">실제 연구</span><h4>SAM + LoRA — 오일&가스 파이프라인 용접 결함 (2025)</h4></div>
+      <p>실제 현장 AUT(자동초음파검사) 데이터에서 융합 부족(LOF) 결함을 탐지하기 위해 SAM에 LoRA 파인튜닝을 적용했습니다. 실제 산업 데이터로 검증된 사례입니다.</p>
+      <div class="case-stat">실제 오일&가스 현장 데이터 · 기존 연구 대비 성능 향상</div>
+    </div>
+
+    <!-- 파이프라인 B -->
+    <div class="pipe" style="border-color:var(--p)">
+      <div class="pipe-title" style="color:var(--p)">파이프라인 B: VLM 단독 — 이해 + 판단 + 설명 (가장 혁신적)</div>
+      <div class="pipe-flow">
+        <div class="pipe-step active" style="--ps-c:var(--b);--ps-bg:var(--bl)"><div class="ps-icon">📷</div><div class="ps-name">카메라</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--p);--ps-bg:var(--pl)"><div class="ps-icon">🧠</div><div class="ps-name">VLM</div><div class="ps-model">Qwen2.5-VL / Cosmos</div><div class="ps-out">판단 + 설명</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--g);--ps-bg:var(--gl)"><div class="ps-icon">📋</div><div class="ps-name">자동 보고</div><div class="ps-out">원인·조치·심각도</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step"><div class="ps-icon">⚙️</div><div class="ps-name">양품/불량 분류</div></div>
+      </div>
+    </div>
+
+    <div class="case" style="border-color:var(--b)">
+      <div class="case-h"><span class="case-badge" style="background:var(--b)">실제 배포</span><h4>NVIDIA Cosmos Reason — 반도체 웨이퍼 결함 분류</h4></div>
+      <p>VLM 단독으로 웨이퍼 맵 결함을 분류합니다. "이 웨이퍼의 주요 결함 패턴은?" → "중심 링 결함, 화학 오염 추정." 엔지니어가 자연어로 질의하고, VLM이 원인까지 추론합니다. 자동 라벨링으로 모델 구축 시간 2배 단축.</p>
+      <div class="case-stat">파인튜닝 96%+ 정확도 · 자연어 원인 추론 · 시계열 분석</div>
+    </div>
+
+    <div class="case" style="border-color:var(--g)">
+      <div class="case-h"><span class="case-badge" style="background:var(--g)">실제 배포</span><h4>GridRaster — 항공우주 터빈·용접 VLM 검사</h4></div>
+      <p>VLM이 전문 검사원의 검사 영상을 관찰하여 학습합니다. 숙련 도제가 스승을 보고 배우듯이. 결함의 외형뿐 아니라 맥락상 중요한지까지 판단합니다. 항공우주, 자동차, 정밀 가공에서 실제 배포 중.</p>
+      <div class="case-stat">항공우주·자동차·정밀가공 실배포 · 숙련자 지식 디지털화</div>
+    </div>
+
+    <!-- 파이프라인 C -->
+    <div class="pipe" style="border-color:var(--g)">
+      <div class="pipe-title" style="color:var(--g)">파이프라인 C: YOLO + SAM + VLM — 완전 통합 (차세대)</div>
+      <div class="pipe-flow">
+        <div class="pipe-step active" style="--ps-c:var(--r);--ps-bg:var(--rl)"><div class="ps-icon">👆</div><div class="ps-name">YOLO</div><div class="ps-model">고속 필터링</div><div class="ps-out">결함 프레임 추출</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--o);--ps-bg:var(--ol)"><div class="ps-icon">✂️</div><div class="ps-name">SAM</div><div class="ps-model">정밀 마스킹</div><div class="ps-out">결함 영역 분리</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--p);--ps-bg:var(--pl)"><div class="ps-icon">🧠</div><div class="ps-name">VLM</div><div class="ps-model">맥락 분석</div><div class="ps-out">원인·조치·보고</div></div>
+        <div class="pipe-arr">→</div>
+        <div class="pipe-step active" style="--ps-c:var(--g);--ps-bg:var(--gl)"><div class="ps-icon">🦾</div><div class="ps-name">행동</div><div class="ps-model">분류/정비/경고</div></div>
+      </div>
+    </div>
+
+    <div class="case" style="border-color:var(--p)">
+      <div class="case-h"><span class="case-badge" style="background:var(--p)">연구</span><h4>InfraGPT — YOLO + VLM 완전 통합 파이프라인 (2025)</h4></div>
+      <p>CCTV 스트림에서 YOLO로 다중 결함을 탐지·세그멘테이션하고, VLM에 전달하여 원인 분석, 수리 도구, 치수, 긴급도를 JSON으로 출력합니다. VLM이 장면 복잡도를 평가하여 최적 YOLO 모델을 동적으로 선택하는 혁신적 구조입니다.</p>
+      <div class="case-stat">VLM이 YOLO 모델 선택까지 제어 · JSON 구조화 출력 · Qwen2.5-VL 사용</div>
+    </div>
+
+    <div class="case" style="border-color:var(--cyan)">
+      <div class="case-h"><span class="case-badge" style="background:var(--cyan)">연구</span><h4>CLIP + SAM — 제로샷 산업 이상 세그멘테이션</h4></div>
+      <p>CLIP의 텍스트 의미 단서로 SAM의 마스크를 안내하여, MVTec-AD와 VisA 벤치마크에서 강력한 제로샷 산업 이상 세그멘테이션 성능을 달성했습니다. 라벨링 없이, 텍스트만으로 산업 결함을 찾고 분할합니다.</p>
+      <div class="case-stat">MVTec-AD · VisA 벤치마크 · 제로샷 · 라벨링 불필요</div>
+    </div>
+
+    <div class="ab" style="background:var(--rl);border-color:var(--r)">
+      <div class="ab-i">⚠️</div>
+      <div>
+        <div class="ab-t" style="color:var(--r)">솔직한 현실</div>
+        <p>YOLO + SAM + VLM 3개 모델을 결합한 파이프라인이 실제 공장에 배포·운영 중인 사례는 <strong>아직 없습니다.</strong> 위의 사례들은 연구·PoC 수준입니다. 하지만 각 2-모델 조합(YOLO+SAM, SAM+VLM, YOLO+VLM)은 이미 검증되었고, 이것들이 합쳐지는 것은 시간 문제입니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 4: 산업별 추천 모델 -->
+<section style="background:#fff;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div class="c">
+    <h2 class="st">🏆 PART 4. 산업 현장별 추천 VLM 모델</h2>
+
+    <div class="mg" style="margin-bottom:1.5rem">
+      <div class="mc" style="border-top:4px solid var(--p)">
+        <div class="mc-top"><span class="mc-rank">🥇</span><h4>Qwen2.5-VL-3B</h4><span class="mc-tag" style="background:var(--pl);color:#5B21B6">산업 1순위</span></div>
+        <p>OpenVINO NPU 공식 지원. 한국어 포함 다국어. 탐지·포인팅·카운팅. 프롬프트로 검사 기준 즉시 변경 가능.</p>
+        <div class="mc-specs">
+          <div class="mc-spec"><span>파라미터</span><span>3B</span></div>
+          <div class="mc-spec"><span>엣지 배포</span><span>✅ AI PC NPU</span></div>
+          <div class="mc-spec"><span>적합 산업</span><span>다품종 제조, 안전, 품질</span></div>
+        </div>
+      </div>
+      <div class="mc" style="border-top:4px solid var(--g)">
+        <div class="mc-top"><span class="mc-rank">🥈</span><h4>Moondream2</h4><span class="mc-tag" style="background:var(--gl);color:#065F46">엣지 최적</span></div>
+        <p>세계 최소 VLM. 2GB 메모리. RPi 5 구동 가능. Ollama 간편 설치.</p>
+        <div class="mc-specs">
+          <div class="mc-spec"><span>파라미터</span><span>1.8B</span></div>
+          <div class="mc-spec"><span>엣지 배포</span><span>✅ RPi 5</span></div>
+          <div class="mc-spec"><span>적합 산업</span><span>중소제조, 교육, 프로토타입</span></div>
+        </div>
+      </div>
+      <div class="mc" style="border-top:4px solid var(--b)">
+        <div class="mc-top"><span class="mc-rank">🥉</span><h4>Florence-2</h4><span class="mc-tag" style="background:var(--bl);color:#1E40AF">제로샷 최강</span></div>
+        <p>탐지+세그멘테이션+캡셔닝 통합. 파인튜닝 없이 즉시 사용. CPU 수 초 응답.</p>
+        <div class="mc-specs">
+          <div class="mc-spec"><span>파라미터</span><span>0.23B / 0.77B</span></div>
+          <div class="mc-spec"><span>엣지 배포</span><span>✅ CPU</span></div>
+          <div class="mc-spec"><span>적합 산업</span><span>프로토타이핑, 다목적</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mg">
+      <div class="mc" style="border-top:4px solid var(--cyan)">
+        <div class="mc-top"><span class="mc-rank">🔬</span><h4>NVIDIA Cosmos Reason</h4><span class="mc-tag" style="background:var(--cl);color:#155E75">반도체 특화</span></div>
+        <p>웨이퍼 결함 분류 96%+. 자연어 Q&A. 자동 라벨링. 시계열 분석.</p>
+        <div class="mc-specs">
+          <div class="mc-spec"><span>적합 산업</span><span>반도체, 고정밀 검사</span></div>
+        </div>
+      </div>
+      <div class="mc" style="border-top:4px solid var(--o)">
+        <div class="mc-top"><span class="mc-rank">🔧</span><h4>PaliGemma 2</h4><span class="mc-tag" style="background:var(--ol);color:#92400E">파인튜닝 특화</span></div>
+        <p>커스텀 데이터 파인튜닝 시 최고 성능. 철강 NEU-DET 등 특정 도메인 맞춤화.</p>
+        <div class="mc-specs">
+          <div class="mc-spec"><span>파라미터</span><span>3B</span></div>
+          <div class="mc-spec"><span>적합 산업</span><span>철강 표면, 도메인 특화</span></div>
+        </div>
+      </div>
+      <div class="mc" style="border-top:4px solid var(--r)">
+        <div class="mc-top"><span class="mc-rank">⚡</span><h4>Namo-R1</h4><span class="mc-tag" style="background:var(--rl);color:#991B1B">CPU 실시간</span></div>
+        <p>0.5B 파라미터 CPU 실시간 VLM. Moondream2·SmolVLM 능가. 처음부터 학습 가능.</p>
+        <div class="mc-specs">
+          <div class="mc-spec"><span>파라미터</span><span>0.5B</span></div>
+          <div class="mc-spec"><span>엣지 배포</span><span>✅ CPU 실시간</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 5: 시나리오별 선택 가이드 -->
+<section>
+  <div class="c">
+    <h2 class="st">📌 PART 5. 시나리오별 모델 선택 가이드</h2>
+    <p class="ss">현장의 문제가 먼저이고, 모델 선택은 그 다음입니다.</p>
+
+    <table class="mx">
+      <thead><tr><th>산업 시나리오</th><th>추천 파이프라인</th><th>추천 모델</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr><td><strong>정지 상태 품질 검사</strong><br><span style="font-size:.72rem;color:var(--mt)">완성품 촬영 후 판정</span></td><td><span class="by">VLM 단독</span></td><td>Qwen2.5-VL-3B</td><td>라벨링 불필요, 원인+조치 설명, 프롬프트만 변경</td></tr>
+        <tr><td><strong>반도체 웨이퍼 검사</strong><br><span style="font-size:.72rem;color:var(--mt)">고정밀, 원인 추론</span></td><td><span class="by">VLM 단독</span></td><td>Cosmos Reason</td><td>96%+ 정확도, 자연어 Q&A, 시계열 분석</td></tr>
+        <tr><td><strong>다품종 중소 제조</strong><br><span style="font-size:.72rem;color:var(--mt)">50종 제품 대응</span></td><td><span class="by">VLM 단독</span></td><td>Moondream2 / Florence-2</td><td>제로샷, 2GB 엣지, 제품마다 프롬프트만 변경</td></tr>
+        <tr><td><strong>결함 면적·치수 정량화</strong><br><span style="font-size:.72rem;color:var(--mt)">결함 크기 측정</span></td><td><span class="bo">YOLO + SAM</span></td><td>YOLO26 + SAM 2</td><td>YOLO가 위치 찾고, SAM이 정밀 윤곽 → 면적 계산</td></tr>
+        <tr><td><strong>초고속 라인 결함 검사</strong><br><span style="font-size:.72rem;color:var(--mt)">초속 20m+ 강판</span></td><td><span class="bn">YOLO 필터 + VLM</span></td><td>YOLO26 → Qwen2.5-VL</td><td>YOLO가 결함 프레임만 추출, VLM이 분석</td></tr>
+        <tr><td><strong>작업자 안전 추적</strong><br><span style="font-size:.72rem;color:var(--mt)">다중 인원 연속 추적</span></td><td><span class="bn">YOLO + ByteTrack</span></td><td>YOLO26 + ByteTrack</td><td>VLM은 프레임 간 연속 추적 불가</td></tr>
+        <tr><td><strong>로봇 피킹 좌표</strong><br><span style="font-size:.72rem;color:var(--mt)">정확한 (x,y,z)</span></td><td><span class="bn">YOLO + SAM + 깊이</span></td><td>YOLO26 + SAM 2 + RealSense</td><td>VLM은 정확한 좌표 출력 불안정</td></tr>
+        <tr><td><strong>품질 보고서 자동화</strong><br><span style="font-size:.72rem;color:var(--mt)">감사 추적 필수</span></td><td><span class="by">VLM 단독</span></td><td>Qwen2.5-VL-7B</td><td>원인·조치·심각도 구조화 JSON 출력</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="c">
+    <div class="cta">
+      <h2>YOLO = 손가락 · SAM = 가위 · VLM = 전문가</h2>
+      <p>
+        손가락으로 가리키고, 가위로 잘라내고, 전문가가 판단합니다.<br>
+        이 세 도구를 <strong>현장의 문제에 맞게 조합</strong>할 줄 아는 것이 진짜 엔지니어링입니다.<br><br>
+        YOLO만 쓰는 시대는 끝나가고 있습니다.<br>
+        <strong>VLM이 중심이 되고, YOLO와 SAM이 보조하는 시대</strong>가 시작됩니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:1.5rem;color:var(--mt);font-size:.78rem">
+  피지컬 AI 산업체험 프로젝트 · AI 비전 모델 완전 가이드 · YOLO·SAM·VLM·VLA · 2026
+</footer>
+
+</body>
+</html>
